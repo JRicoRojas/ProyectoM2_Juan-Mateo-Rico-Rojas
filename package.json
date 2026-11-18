@@ -1,5 +1,25 @@
 {
+  "name": "proyectom2_mateo_rico",
+  "version": "1.0.0",
+  "description": "proyecto para uso de APIs node.js express y backend, app para authors y post",
+  "homepage": "https://github.com/JRicoRojas/ProyectoM2_Juan-Mateo-Rico-Rojas#readme",
+  "bugs": {
+    "url": "https://github.com/JRicoRojas/ProyectoM2_Juan-Mateo-Rico-Rojas/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JRicoRojas/ProyectoM2_Juan-Mateo-Rico-Rojas.git"
+  },
+  "license": "ISC",
+  "author": "Mateo Rico",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^5.3.0"
-  }
-}
+  },
+  "devDependencies": {}
+} 
