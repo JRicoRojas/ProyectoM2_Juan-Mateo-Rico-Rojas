@@ -1,3 +1,5 @@
+TRUNCATE TABLE authors, posts, comments RESTART IDENTITY CASCADE;
+
 INSERT INTO authors (name, email, bio) VALUES
 ('Laura Gómez','laura.gomez@devspark.io','Escribe sobre desarrollo web y carreras en tecnología'),
 ('Andrés Pardo','andres.pardo@devspark.io','Backend developer, fan de las bases de datos'),
