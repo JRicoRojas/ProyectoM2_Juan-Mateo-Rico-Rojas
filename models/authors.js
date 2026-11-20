@@ -1,7 +1,7 @@
 const pool = require ("../db/config");
 
 async function getAllAuthors(filters = {}){
-    let sql = 'SELECT * FROM categories WHERE 1=1';
+    let sql = 'SELECT * FROM authors WHERE 1=1';
     const values = [];
     paramIndex = 1;
 
@@ -15,8 +15,8 @@ async function getAllAuthors(filters = {}){
         values.push(filters.email)
         paramIndex++;
     }
-    sqñ ` ORDER BY ASC`;
-    const results = await pool.query(sql.values);
+    sql += ` ORDER BY id ASC`;
+    const results = await pool.query(sql, values);
     return results.rows;
 }
 
