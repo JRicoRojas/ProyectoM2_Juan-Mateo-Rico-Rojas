@@ -47,7 +47,7 @@ async function deleteAuthor (id){
 
 module.exports = {
     getAllAuthors,
-    getAuthorsByID
+    getAuthorsByID,
     createAuthor,
     replaceAuthor,
     updateAuthor,
