@@ -34,7 +34,7 @@ RETURNING *;
 -- DELETE /authors/:id
 
 DELETE FROM authors
-WHERE id = 6
+WHERE id = 7
 RETURNING *;
 
 -- CHECK TABLE AGAIN
@@ -84,3 +84,5 @@ RETURNING *;
 -- CHECK TABLE AGAIN
 
 SELECT * FROM posts;
+
+-- QUERIES PARA comments
