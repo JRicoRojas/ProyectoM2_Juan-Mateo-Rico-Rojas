@@ -2,17 +2,13 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const routerAuthors = require("./routes/author.routes");
+const {errorHandler} = require("./errors/errorHandler");
 
 
 app.use(express.json());
 app.use('/authors', routerAuthors);
+app.use(errorHandler);
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || "Error interno del servidor"
-  });
-});
 
 
 app.listen(PORT, () => {

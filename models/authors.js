@@ -41,7 +41,7 @@ async function updateAuthor (id, name, email, bio){
 }
 
 async function deleteAuthor (id){
-    const results = await pool.query('DELETE FROM authors WHERE id = $1 RETURNING *;') [id];
+    const results = await pool.query('DELETE FROM authors WHERE id = $1 RETURNING *;',[id]);
     return results.rows[0];
 }
 
