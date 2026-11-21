@@ -10,8 +10,7 @@ describe('validateId', () => {
     
     test('ID inválido lanza error', () => {
         const next = vi.fn();
-        expect(() => validateId({ params: { id: 'abc' } }, {}, next))
-            .toThrow('ID should be a positive integer');
+        expect(() => validateId({ params: { id: 'abc' } }, {}, next)).toThrow('ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
     });
 });
@@ -64,6 +63,88 @@ describe('validateBio', ()=>{
 });
 
 describe('validateAuthorBody', ()=>{
-    const next = vi.fn();
+    test('body completo llama a next', ()=>{
+        const next = vi.fn();
+        const req = {body: {name: 'test', email: 'test@test.com', bio: 'test bio test'}};
+        validateAuthorBody(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test ('bio es opcional', ()=>{
+        const next = vi.fn();
+        const req = {body: {name: 'test', email: 'test@test.com'}};
+        validateAuthorBody(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    
+    test ('No deja sin name',()=>{
+        const next = vi.fn();
+        const req = {body: { email: 'test@test.com'}};
+        expect(() => validateAuthorBody(req, {}, next)).toThrow('Name is required');
+        expect(next).not.toHaveBeenCalled();
+    });
 
+    test ('No deja sin email',()=>{
+        const next = vi.fn();
+        const req = {body: { name: 'test'}};
+        expect(() => validateAuthorBody(req, {}, next)).toThrow('Email is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+
+        test ('No deja sin body',()=>{
+        const next = vi.fn();
+        const req = {body: {}};
+        expect(() => validateAuthorBody(req, {}, next)).toThrow('Name is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateAuthorPatch', ()=>{
+    test('patch con todos los valores para cambiar pasa',()=>{
+        const next = vi.fn();
+        const req = {body :{name: 'test', email: 'test@test.com', bio: 'este es un test de bio'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+        test('patch con todos los solo name',()=>{
+        const next = vi.fn();
+        const req = {body :{name: 'test'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con todos los solo email',()=>{
+        const next = vi.fn();
+        const req = {body :{email: 'test@test.com'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con todos los solo bio',()=>{
+        const next = vi.fn();
+        const req = {body :{bio: 'este es un test de bio'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con name y email',()=>{
+        const next = vi.fn();
+        const req = {body :{name: 'test', email: 'test@test.com'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con name y bio',()=>{
+        const next = vi.fn();
+        const req = {body :{name: 'test', bio: 'este es un test de bio'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con email y bio',()=>{
+        const next = vi.fn();
+        const req = {body :{email: 'test@test.com', bio: 'este es un test de bio'}};
+        validateAuthorPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('No deja sin body',()=>{
+        const next = vi.fn();
+        const req = {body :{}};
+        expect(() => validateAuthorPatch(req, {}, next)).toThrow('At least one field is required');
+        expect(next).not.toHaveBeenCalled();
+    });
 });
