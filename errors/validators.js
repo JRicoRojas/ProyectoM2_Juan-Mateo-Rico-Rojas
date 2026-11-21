@@ -19,9 +19,14 @@ function validateEmail(email) {
 }
 
 function validateName(name) {
-    if (!name) {
+
+    if (!name || (typeof name === 'string' && !name.trim())) {
         throw badRequest('Name is required');
     }
+    if (typeof name !== 'string') {
+        throw badRequest('Name should be a "String"');
+    }
+
     if (typeof name !== 'string') {
         throw badRequest('Name should be a "String"');
     }
@@ -29,6 +34,10 @@ function validateName(name) {
 
 function validateBio(bio) {
     if (bio === undefined) return;
+    
+    if (typeof bio === 'string' && !bio.trim()) {
+        throw badRequest('Bio is required');
+    }
 
     if (typeof bio !== 'string') {
         throw badRequest('Bio should be a "String"');
