@@ -56,6 +56,9 @@ function validateAuthorPatch(req, res, next) {
 
 module.exports = {
     validateId,
+    validateEmail,
+    validateName,
+    validateBio,
     validateAuthorBody,
     validateAuthorPatch,
 };
