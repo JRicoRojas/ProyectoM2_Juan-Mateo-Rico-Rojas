@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, vi, test, expect } from "vitest";
 import { validateId, validateEmail, validateName, validateBio, validateAuthorBody, validateAuthorPatch } from "../errors/validators";
 
 describe('validateId', () => {
