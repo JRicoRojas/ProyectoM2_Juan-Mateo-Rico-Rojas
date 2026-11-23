@@ -1,14 +1,132 @@
-import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "vitest";
-import pool from './db/config.js';
+import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import pool from '../db/config.js';
 import  request  from 'supertest';
 import app from '../app.js'
 import runSeed from "../db/runSeed.js";
 
-describe ('GET' , ()=>{
-    beforeAll(async ()=>{
+describe ('GET / authors' , () => {
+    beforeAll(async () => {
         await runSeed();
     });
-    afterAll(async () => {
+
+    test('Obtener todos los autores', async () => {
+        const response = await request(app)
+            .get('/authors')
+        expect(response.statusCode).toBe(200);
+        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body).toHaveLength(5);
+
+        for (const author of response.body) {
+            expect(author).toEqual({
+                id: expect.any(Number),
+                name: expect.any(String),
+                email: expect.any(String),
+                bio: expect.any(String),
+                created_at: expect.any(String),
+            });
+        }
+    });
+
+    test ('query por name', async () => {
+        const res = await request (app)
+            .get('/authors').query({name: 'cam'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body[0].id).toBe(3);
+        expect(res.body[0].name).toBe('Camila Rojas');
+        expect(res.body[0].email).toBe('camila.rojas@devspark.io');
+        expect(res.body[0].bio).toBe('');
+    });
+
+    test ('query name sin valores', async () => {
+        const res = await request (app)
+            .get('/authors').query({name: 'zzzz'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual([]);
+    });
+
+    test('query por email', async() =>{
+        const res = await request(app).get('/authors').query({email: 'laura.gomez@devspark.io'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body[0].id).toBe(1);
+        expect(res.body[0].name).toBe('Laura Gómez');
+        expect(res.body[0].email).toBe('laura.gomez@devspark.io');
+        expect(res.body[0].bio).toBe('Escribe sobre desarrollo web y carreras en tecnología');
+    });
+
+    test ('query email sin valores', async () => {
+        const res = await request (app).get('/authors').query({email: 'test'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual([]);
+    });
+
+
+    test ('Obtener autor por ID', async () =>{
+        const res = await request(app)
+            .get('/authors/1');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(1);
+        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.email).toBe('laura.gomez@devspark.io');
+        expect(res.body.bio).toBe('Escribe sobre desarrollo web y carreras en tecnología');
+    });
+
+    test('error al no encontrar ID', async()=>{
+        const res = await request(app)
+            .get('/authors/6');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
+    });
+});
+
+describe('POST/authors', () => {
+    beforeAll(async () => {
+        await runSeed();
+    });
+    
+    test('crear author con datos validos', async () => {
+        const res = await request(app).post('/authors').send({ name: 'Juan', email: 'juan@example.com', bio: "Test bio" });
+        expect(res.statusCode).toBe(201);
+        expect(res.body.id).toBe(6);
+        expect(res.body.name).toBe('Juan');
+        expect(res.body.email).toBe('juan@example.com');
+        expect(res.body.bio).toBe('Test bio');
+    });
+
+    test ('intento author sin body', async () =>{
+        const res = await request(app).post('/authors').send({});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test ('intento author sin name', async () =>{
+        const res = await request(app).post('/authors').send({email: 'juan@example.com', bio: "Test bio"});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test ('intento author sin email', async () =>{
+        const res = await request(app).post('/authors').send({name: 'Juan'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test ('intento author sin bio', async () =>{
+        const res = await request(app).post('/authors').send({ name: 'Mateo', email: 'mateo@example.com'});
+        expect(res.statusCode).toBe(201);
+        expect(res.body.id).toBe(7);
+        expect(res.body.name).toBe('Mateo');
+        expect(res.body.email).toBe('mateo@example.com');
+        expect(res.body.bio).toBe(null);
+    });
+
+    test ('intento author con mismo email', async () =>{
+        const res = await request(app).post('/authors').send({ name: 'Mateo', email: 'mateo@example.com'});
+        expect(res.statusCode).toBe(409);
+        expect(res.body.error).toContain('Author');
+    });
+});
+
+afterAll(async () => {
+    await runSeed();
     await pool.end();
-  });
 });

@@ -3,19 +3,20 @@ const pool = require ("../db/config");
 async function getAllAuthors(filters = {}){
     let sql = 'SELECT * FROM authors WHERE 1=1';
     const values = [];
-    paramIndex = 1;
+    let paramIndex = 1;
 
     if (filters.name){
-        sql += ` AND name = $${paramIndex}`;
-        values.push(filters.name);
+        sql += ` AND name ILIKE $${paramIndex}`;
+        values.push(`%${filters.name}%`);
         paramIndex++;
     }
     if(filters.email){
         sql += ` AND email = $${paramIndex}`;
-        values.push(filters.email)
+        values.push(filters.email);
         paramIndex++;
     }
     sql += ` ORDER BY id ASC`;
+
     const results = await pool.query(sql, values);
     return results.rows;
 }
