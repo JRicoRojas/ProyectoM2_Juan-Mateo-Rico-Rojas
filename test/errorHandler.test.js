@@ -47,6 +47,23 @@ describe('errorHandler', () => {
         expect(res.status).toHaveBeenCalledWith(500);
     });
 
+    test('usa err.status cuando no hay code entero (ej. JSON roto de express.json)', () => {
+        const res = mockRes();
+        const err = new Error('Unexpected end of JSON input');
+        err.status = 400;
+        errorHandler(err, {}, res, vi.fn());
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Unexpected end of JSON input' });
+    });
+
+    test('err.status fuera de rango 4xx/5xx se ignora y responde 500', () => {
+        const res = mockRes();
+        const err = new Error('raro');
+        err.status = 200;
+        errorHandler(err, {}, res, vi.fn());
+        expect(res.status).toHaveBeenCalledWith(500);
+    });
+
     test('error sin mensaje usa "Internal server error"', () => {
         const res = mockRes();
         errorHandler(new Error(''), {}, res, vi.fn());

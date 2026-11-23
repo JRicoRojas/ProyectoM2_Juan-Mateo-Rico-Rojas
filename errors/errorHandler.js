@@ -6,7 +6,9 @@ function errorHandler(err, req, res, next) {
         return res.status(errorD.status).json({error: errorD.message});
     }
     console.error(err.stack);
-    const status = Number.isInteger(err.code) ? err.code : 500;
+    const status = Number.isInteger(err.code)
+        ? err.code
+        : (Number.isInteger(err.status) && err.status >= 400 && err.status < 600 ? err.status : 500);
     res.status(status).json({
         error: err.message || "Internal server error"
     });

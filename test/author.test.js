@@ -83,6 +83,20 @@ describe ('GET / authors' , () => {
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('integer');
     });
+
+    test('error ID es cero', async()=>{
+        const res = await request(app)
+            .get('/authors/0');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('error ID es negativo', async()=>{
+        const res = await request(app)
+            .get('/authors/-1');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
 });
 
 describe('POST/authors', () => {
@@ -138,10 +152,22 @@ describe('POST/authors', () => {
         expect(res.body.error).toContain('String');
     });
 
-        test ('intento author con mal con bio no string', async () =>{
-        const res = await request(app).post('/authors').send({ name: 123, email: 'mateo@example.com', bio: 123});
+    test ('intento author con mal con bio no string', async () =>{
+        const res = await request(app).post('/authors').send({ name: 'test name', email: 'mateo@example.com', bio: 123});
         expect(res.statusCode).toBe(400);
-        expect(res.body.error).toContain('String');
+        expect(res.body.error).toContain('Bio should be');
+    });
+
+    test ('intento author con mal email format', async () =>{
+        const res = await request(app).post('/authors').send({ name: 'test name', email: 'mateo', bio: 123});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('Invalid email format');
+    });
+
+    test('update name solo espacion', async () => {
+        const res = await request(app).post('/authors').send({name: '     ',email: 'juan@example.com'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('required');
     });
 });
 
@@ -208,6 +234,18 @@ describe('PUT /authors', () =>{
         const res = await request(app).put('/authors/abc').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('integer');
+    });
+
+    test('PUT author con name no string', async () => {
+        const res = await request(app).put('/authors/5').send({ name: 123, email: 'juan@example.com' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('String');
+    });
+
+    test('PUT author con bio no string', async () => {
+        const res = await request(app).put('/authors/5').send({ name: 'Juan', email: 'juan@example.com', bio: 123 });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('Bio should be');
     });
 
     test('PUT error al no encontrar ID', async()=>{
@@ -316,7 +354,19 @@ describe ('PATCH/authors', async () =>{
         expect(res.body.error).toContain('integer');
     });
 
-    test('Parch error al no encontrar ID', async()=>{
+    test('PATCH author con name no string', async () => {
+        const res = await request(app).patch('/authors/5').send({ name: 123 });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('String');
+    });
+
+    test('PATCH author con bio no string', async () => {
+        const res = await request(app).patch('/authors/5').send({ bio: 123 });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('Bio should be');
+    });
+
+    test('PATCH error al no encontrar ID', async()=>{
         const res = await request(app).patch('/authors/999').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('not found');
@@ -370,6 +420,17 @@ describe('NOEXISTE/authors', () => {
         const res = await request(app).get('/noexiste');
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('not found');
+    });
+});
+
+describe('JSON malformado', () => {
+
+    test('POST con JSON roto responde 400', async () => {
+        const res = await request(app)
+            .post('/authors')
+            .set('Content-Type', 'application/json')
+            .send('{"name": "Juan", ');
+        expect(res.statusCode).toBe(400);
     });
 });
 
