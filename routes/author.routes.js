@@ -16,6 +16,13 @@ router.get("/:id", validateId, async (req, res) => {
     res.status(200).json(results);
 });
 
+router.get("/:id/posts", validateId, async (req, res) => {
+    const id = Number(req.params.id);
+    const results = await authorModels.getAuthorPosts(id);
+    if (!results) throw notFound('Author not found');
+    res.status(200).json(results);
+});
+
 router.post("/", validateAuthorBody, async (req, res) => {
     const { name, email, bio } = req.body;
     const results = await authorModels.createAuthor(name, email, bio);

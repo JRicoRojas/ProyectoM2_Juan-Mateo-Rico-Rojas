@@ -51,6 +51,13 @@ SELECT * FROM posts;
 SELECT * FROM posts
 WHERE id = 1;
 
+--GET /posts/author/:authorId 
+
+SELECT * FROM posts
+JOIN  authors
+ON authors.id = posts.author_id
+WHERE authors.id = 1;
+
 --POST /posts
 
 INSERT INTO posts (title, content, author_id,published) VALUES

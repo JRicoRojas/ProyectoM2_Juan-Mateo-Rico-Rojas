@@ -26,6 +26,17 @@ async function getAuthorsByID (id){
     return results.rows[0];
 }
 
+async function getAuthorPosts(id){
+    const resA = await pool.query('SELECT * FROM authors WHERE id = $1;', [id]);
+    const resAuthor = resA.rows[0];
+    if(resA.rows.length === 0){
+        return undefined;
+    }
+    const resP = await pool.query('SELECT id, title, content FROM posts WHERE author_id = $1', [id]);
+    resAuthor.posts = resP.rows;
+    return resAuthor;
+}
+
 async function createAuthor (name, email, bio){
     const results = await pool.query('INSERT INTO authors (name, email, bio) VALUES ($1, $2, $3) RETURNING *;',[name, email, bio]);
     return results.rows[0];
@@ -49,6 +60,7 @@ async function deleteAuthor (id){
 module.exports = {
     getAllAuthors,
     getAuthorsByID,
+    getAuthorPosts,
     createAuthor,
     replaceAuthor,
     updateAuthor,
