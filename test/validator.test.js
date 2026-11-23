@@ -1,5 +1,5 @@
 import { describe, vi, test, expect } from "vitest";
-import { validateId, validateEmail, validateName, validateBio, validateAuthorBody, validateAuthorPatch } from "../errors/validators";
+import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch } from "../errors/validators";
 
 describe('validateId', () => {
     test('ID valido llama next', () => {
@@ -35,16 +35,16 @@ describe('validateEmail', () =>{
 
 describe('validateName', () => {
     test ('Acepta name valido', () =>{
-        expect(()=>validateName('Juan Mateo Rico Rojas')).not.toThrow();
+        expect(()=>validateString('Juan Mateo Rico Rojas')).not.toThrow();
     });
     test ('Rechaza name no string', ()=>{
-        expect(()=>validateName(1)).toThrow('Name should be a "String"');
+        expect(()=>validateString(1, 'Name')).toThrow("Name should be a 'String'");
     });
     test ('Rechaza name no string', ()=>{
-        expect(()=>validateName('')).toThrow('Name is required');
+        expect(()=>validateString('', 'Name')).toThrow('Name is required');
     });
     test ('Rechaza name no string', ()=>{
-        expect(()=>validateName('      ')).toThrow('Name is required');
+        expect(()=>validateString('      ', 'Name')).toThrow('Name is required');
     });
 });
 

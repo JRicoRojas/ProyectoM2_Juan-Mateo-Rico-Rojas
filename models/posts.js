@@ -32,18 +32,18 @@ async function getPostsAuthor(id){
     return res.rows[0];
 }
 
-async function createPost(title, content, published){
-    const res = await pool.query('INSERT INTO posts (tittle, content, published) VALUES ($1, $2, $3) RETURNING *', [title,content, published]);
+async function createPost(title, content, published, author_id){
+    const res = await pool.query('INSERT INTO posts (tittle, content, published, author_id) VALUES ($1, $2, $3, $4) RETURNING *', [title,content, published, author_id]);
     return res[0];
 }
 
-async function replacePost (id, title, content, published){
-    const res = await pool.query('UPDATE posts SET title = $2, content = $3, published = $4 WHERE id = $1 RETURNING *;',[id, title, content, published]);
+async function replacePost (id, title, content, published, author_id){
+    const res = await pool.query('UPDATE posts SET title = $2, content = $3, published = $4, author_id = $5 WHERE id = $1 RETURNING *;',[id, title, content, published, author_id]);
     return res.rows[0];
 }
 
-async function updateAuthor (id, title, content, published){
-    const res = await pool.query('UPDATE authors SET title = COALESCE ($2,title), content = COALESCE ($3,content), published = COALESCE ($4,published) WHERE id = $1 RETURNING *;',[id, title, content, published]);
+async function updateAuthor (id, title, content, published, author_id){
+    const res = await pool.query('UPDATE authors SET title = COALESCE ($2,title), content = COALESCE ($3,content), published = COALESCE ($4,published), published = COALESCE ($4,author_id) WHERE id = $1 RETURNING *;',[id, title, content, published, author_id]);
     return res.rows[0];
 }
 

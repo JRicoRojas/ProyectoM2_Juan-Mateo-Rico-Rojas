@@ -18,17 +18,17 @@ function validateEmail(email) {
     }
 }
 
-function validateName(name) {
+function validateString(string, name) {
 
-    if (!name || (typeof name === 'string' && !name.trim())) {
-        throw badRequest('Name is required');
+    if (!string || (typeof string === 'string' && !string.trim())) {
+        throw badRequest(`${name} is required`);
     }
-    if (typeof name !== 'string') {
-        throw badRequest('Name should be a "String"');
+    if (typeof string !== 'string') {
+        throw badRequest(`${name} should be a 'String'`);
     }
 
-    if (typeof name !== 'string') {
-        throw badRequest('Name should be a "String"');
+    if (typeof string !== 'string') {
+        throw badRequest(`${name} should be a 'String'`);
     }
 }
 
@@ -44,9 +44,15 @@ function validateBio(bio) {
     }
 }
 
+function validateBoolean(boolean, name){
+    if(boolean){
+
+    }
+}
+
 function validateAuthorBody(req, res, next) {
     const { name, email, bio } = req.body ?? {};
-    validateName(name);
+    validateString(name, 'Name');
     validateEmail(email);
     validateBio(bio);
     next();
@@ -57,16 +63,22 @@ function validateAuthorPatch(req, res, next) {
     if (name === undefined && email === undefined && bio === undefined) {
         throw badRequest('At least one field is required');
     }
-    if (name !== undefined) validateName(name);
+    if (name !== undefined) validateString(name, 'Name');
     if (email !== undefined) validateEmail(email);
     validateBio(bio);
     next();
 }
 
+function validatePostsBody (req, res, next){
+    const {title, content, published, author_id} = req.body ?? {};
+    validateString(title, 'Title');
+    validateString(content, 'Content');
+}
+
 module.exports = {
     validateId,
     validateEmail,
-    validateName,
+    validateString,
     validateBio,
     validateAuthorBody,
     validateAuthorPatch,
