@@ -76,6 +76,13 @@ describe ('GET / authors' , () => {
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('not found');
     });
+
+    test('error ID no es un numero', async()=>{
+        const res = await request(app)
+            .get('/authors/abc');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
 });
 
 describe('POST/authors', () => {
@@ -84,7 +91,7 @@ describe('POST/authors', () => {
     });
     
     test('crear author con datos validos', async () => {
-        const res = await request(app).post('/authors').send({ name: 'Juan', email: 'juan@example.com', bio: "Test bio" });
+        const res = await request(app).post('/authors').send({ name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
         expect(res.statusCode).toBe(201);
         expect(res.body.id).toBe(6);
         expect(res.body.name).toBe('Juan');
@@ -99,7 +106,7 @@ describe('POST/authors', () => {
     });
 
     test ('intento author sin name', async () =>{
-        const res = await request(app).post('/authors').send({email: 'juan@example.com', bio: "Test bio"});
+        const res = await request(app).post('/authors').send({email: 'juan@example.com', bio: 'Test bio'});
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('is required');
     });
@@ -123,6 +130,246 @@ describe('POST/authors', () => {
         const res = await request(app).post('/authors').send({ name: 'Mateo', email: 'mateo@example.com'});
         expect(res.statusCode).toBe(409);
         expect(res.body.error).toContain('Author');
+    });
+
+    test ('intento author con name no String', async () =>{
+        const res = await request(app).post('/authors').send({ name: 123, email: 'mateo@example.com'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('String');
+    });
+
+        test ('intento author con mal con bio no string', async () =>{
+        const res = await request(app).post('/authors').send({ name: 123, email: 'mateo@example.com', bio: 123});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('String');
+    });
+});
+
+describe('PUT /authors', () =>{
+    beforeAll(async () => {
+        await runSeed();
+    });
+
+    test('replace author con datos validos', async () => {
+        const res = await request(app).put('/authors/5').send({ name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('Juan');
+        expect(res.body.email).toBe('juan@example.com');
+        expect(res.body.bio).toBe('Test bio');
+    });
+
+    test('replace author sin bio', async () => {
+        const res = await request(app).put('/authors/5').send({ name: 'Juan', email: 'juan@example.com'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('Juan');
+        expect(res.body.email).toBe('juan@example.com');
+        expect(res.body.bio).toBe(null);
+    });
+
+    test('replace author sin name', async () => {
+        const res = await request(app).put('/authors/5').send({email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test('replace author sin email', async () => {
+        const res = await request(app).put('/authors/5').send({ name: 'Juan', bio: 'Test bio' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test('replace author solo con bio', async () => {
+        const res = await request(app).put('/authors/5').send({ bio: 'Test bio' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test('replace author sin body', async () => {
+        const res = await request(app).put('/authors/5');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('is required');
+    });
+
+    test('replace email sin formato', async () => {
+        const res = await request(app).put('/authors/5').send({name: 'Juan', email: 'juan'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('format');
+    });
+
+    test('update name solo espacion', async () => {
+        const res = await request(app).put('/authors/5').send({name: '     ',email: 'juan@example.com'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('required');
+    });
+
+    test('error ID no es un numero', async()=>{
+        const res = await request(app).put('/authors/abc').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('PUT error al no encontrar ID', async()=>{
+        const res = await request(app).put('/authors/999').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
+    });
+
+    test ('intento author con mismo email', async () =>{
+        const res = await request(app).put('/authors/5').send({ name: 'Mateo', email: 'laura.gomez@devspark.io'});
+        expect(res.statusCode).toBe(409);
+        expect(res.body.error).toContain('Author');
+    });
+});
+
+describe ('PATCH/authors', async () =>{
+
+    beforeAll(async () => {
+        await runSeed();
+    });
+
+    test('update author con datos validos', async () => {
+        const res = await request(app).patch('/authors/5').send({ name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('Juan');
+        expect(res.body.email).toBe('juan@example.com');
+        expect(res.body.bio).toBe('Test bio');
+    });
+
+    test('update author sin bio', async () => {
+        const res = await request(app).patch('/authors/5').send({ name: 'Mateo', email: 'mateo@example.com'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('Mateo');
+        expect(res.body.email).toBe('mateo@example.com');
+        expect(res.body.bio).toBe('Test bio');
+    });
+
+    test('update author sin email', async () => {
+        const res = await request(app).patch('/authors/5').send({ name: 'camilo', bio: 'camilo bio' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('camilo');
+        expect(res.body.email).toBe('mateo@example.com');
+        expect(res.body.bio).toBe('camilo bio');
+    });
+
+    test('update author sin name', async () => {
+        const res = await request(app).patch('/authors/5').send({email: 'andres@example.com', bio: 'andres bio' });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('camilo');
+        expect(res.body.email).toBe('andres@example.com');
+        expect(res.body.bio).toBe('andres bio');
+    });
+
+    test('update author solo name', async () => {
+        const res = await request(app).patch('/authors/5').send({name: 'andres'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('andres');
+        expect(res.body.email).toBe('andres@example.com');
+        expect(res.body.bio).toBe('andres bio');
+    });
+
+    test('update author solo email', async () => {
+        const res = await request(app).patch('/authors/5').send({email: 'rico@example.com'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('andres');
+        expect(res.body.email).toBe('rico@example.com');
+        expect(res.body.bio).toBe('andres bio');
+    });
+
+    test('update author solo bio', async () => {
+        const res = await request(app).patch('/authors/5').send({bio: 'test bio'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('andres');
+        expect(res.body.email).toBe('rico@example.com');
+        expect(res.body.bio).toBe('test bio');
+    });
+
+    test('update author sin body', async () => {
+        const res = await request(app).patch('/authors/5');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('required');
+    });
+
+    test('update email sin formato', async () => {
+        const res = await request(app).patch('/authors/5').send({email: 'rico'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('format');
+    });
+
+    test('update name solo espacio', async () => {
+        const res = await request(app).patch('/authors/5').send({name: '     '});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('required');
+    });
+
+    test('error ID no es un numero', async()=>{
+        const res = await request(app).patch('/authors/abc').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('Parch error al no encontrar ID', async()=>{
+        const res = await request(app).patch('/authors/999').send({name: 'Juan', email: 'juan@example.com', bio: 'Test bio' });
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
+    });
+
+    test ('intento author con mismo email', async () =>{
+        const res = await request(app).patch('/authors/5').send({ name: 'Mateo', email: 'laura.gomez@devspark.io'});
+        expect(res.statusCode).toBe(409);
+        expect(res.body.error).toContain('Author');
+    });
+});
+
+describe('DELETE/authors', () =>{
+
+    beforeAll(async () => {
+        await runSeed();
+    });
+
+    test('delete author 5', async () => {
+        const res = await request(app).delete('/authors/5');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(5);
+        expect(res.body.name).toBe('Valentina Torres');
+        expect(res.body.email).toBe('valentina.torres@devspark.io');
+        expect(res.body.bio).toBe('Escribe reseñas de libros tecnicos');
+    });
+    test('error ID no es un numero', async()=>{
+        const res = await request(app).delete('/authors/abc');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+    test('DELETE error al no encontrar ID', async()=>{
+        const res = await request(app).delete('/authors/999');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
+    });
+    test('Check delete author', async()=>{
+        const res = await request(app).get('/authors/5');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
+    });
+});
+
+describe('NOEXISTE/authors', () => {
+
+    beforeAll(async () => {
+        await runSeed();
+    });
+
+    test ('ruta no existe', async () =>{
+        const res = await request(app).get('/noexiste');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toContain('not found');
     });
 });
 
