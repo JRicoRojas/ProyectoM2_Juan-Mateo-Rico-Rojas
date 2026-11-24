@@ -112,8 +112,8 @@ describe('GET /posts', () => {
         const res = await request(app).get('/posts/1');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.title).toBe('Cómo empecé en el desarrollo web');
-        expect(res.body.content).toBe('Mi ruta de aprendizaje en el primer año...');
+        expect(res.body.title).toBe('Como empece en el desarrollo web');
+        expect(res.body.content).toBe('Mi ruta de aprendizaje en el primer ano...');
         expect(res.body.author_id).toBe(1);
         expect(res.body.published).toBe(true);
     });
@@ -140,9 +140,9 @@ describe('GET /posts', () => {
         const res = await request(app).get('/posts/1/author');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.title).toBe('Cómo empecé en el desarrollo web');
+        expect(res.body.title).toBe('Como empece en el desarrollo web');
         expect(res.body.author_id).toBe(1);
-        expect(res.body.author_name).toBe('Laura Gómez');
+        expect(res.body.author_name).toBe('Laura Gomez');
         expect(res.body.author_email).toBe('laura.gomez@devspark.io');
     });
 
@@ -162,19 +162,19 @@ describe('GET /posts', () => {
         const res = await request(app).get('/posts/author/1');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.name).toBe('Laura Gomez');
         expect(res.body.email).toBe('laura.gomez@devspark.io');
         expect(res.body.posts).toHaveLength(2);
         expect(res.body.posts).toEqual([
-            {id: 1, title: 'Cómo empecé en el desarrollo web', content: 'Mi ruta de aprendizaje en el primer año...'},
-            {id: 2, title: 'Errores comunes con Git', content: 'Los tres tropiezos que más veo en principiantes...'},
+            {id: 1, title: 'Como empece en el desarrollo web', content: 'Mi ruta de aprendizaje en el primer ano...'},
+            {id: 2, title: 'Errores comunes con Git', content: 'Los tres tropiezos que mas veo en principiantes...'},
         ]);
     });
 
     test('autor con posts de otro autor no se mezclan', async () => {
         const res = await request(app).get('/posts/author/2');
         expect(res.statusCode).toBe(200);
-        expect(res.body.name).toBe('Andrés Pardo');
+        expect(res.body.name).toBe('Andres Pardo');
         expect(res.body.posts.map(post => post.id)).toEqual([3, 4]);
     });
 
@@ -209,7 +209,7 @@ describe('GET /posts', () => {
         const porPost = await request(app).get('/posts/1/author');
         expect(porAutor.body.posts).toBeDefined();
         expect(porPost.body.posts).toBeUndefined();
-        expect(porPost.body.author_name).toBe('Laura Gómez');
+        expect(porPost.body.author_name).toBe('Laura Gomez');
     });
 });
 
@@ -405,7 +405,7 @@ describe('PATCH /posts', () => {
         const res = await request(app).patch('/posts/5').send({title: 'Solo titulo'});
         expect(res.statusCode).toBe(200);
         expect(res.body.title).toBe('Solo titulo');
-        expect(res.body.content).toBe('Cómo un buen diseño reduce el trabajo del frontend...');
+        expect(res.body.content).toBe('Como un buen diseno reduce el trabajo del frontend...');
         expect(res.body.published).toBe(true);
         expect(res.body.author_id).toBe(4);
     });
@@ -413,7 +413,7 @@ describe('PATCH /posts', () => {
     test('update post solo content', async () => {
         const res = await request(app).patch('/posts/5').send({content: 'Solo contenido'});
         expect(res.statusCode).toBe(200);
-        expect(res.body.title).toBe('Diseñar pensando en el desarrollador');
+        expect(res.body.title).toBe('Disenar pensando en el desarrollador');
         expect(res.body.content).toBe('Solo contenido');
         expect(res.body.published).toBe(true);
         expect(res.body.author_id).toBe(4);
@@ -422,7 +422,7 @@ describe('PATCH /posts', () => {
     test('update post solo author_id', async () => {
         const res = await request(app).patch('/posts/5').send({author_id: 1});
         expect(res.statusCode).toBe(200);
-        expect(res.body.title).toBe('Diseñar pensando en el desarrollador');
+        expect(res.body.title).toBe('Disenar pensando en el desarrollador');
         expect(res.body.published).toBe(true);
         expect(res.body.author_id).toBe(1);
     });
@@ -431,7 +431,7 @@ describe('PATCH /posts', () => {
         const res = await request(app).patch('/posts/5').send({published: false});
         expect(res.statusCode).toBe(200);
         expect(res.body.published).toBe(false);
-        expect(res.body.title).toBe('Diseñar pensando en el desarrollador');
+        expect(res.body.title).toBe('Disenar pensando en el desarrollador');
         expect(res.body.author_id).toBe(4);
     });
 
@@ -495,7 +495,7 @@ describe('DELETE /posts', () => {
         const res = await request(app).delete('/posts/5');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(5);
-        expect(res.body.title).toBe('Diseñar pensando en el desarrollador');
+        expect(res.body.title).toBe('Disenar pensando en el desarrollador');
         expect(res.body.author_id).toBe(4);
     });
 

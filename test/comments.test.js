@@ -36,7 +36,7 @@ describe('GET /comments', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0].id).toBe(1);
-        expect(res.body[0].content).toBe('Muy buen resumen, me sentí identificado');
+        expect(res.body[0].content).toBe('Muy buen resumen, me senti identificado');
     });
 
     test('query por post_id', async () => {
@@ -98,7 +98,7 @@ describe('GET /comments', () => {
         const res = await request(app).get('/comments/1');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.content).toBe('Muy buen resumen, me sentí identificado');
+        expect(res.body.content).toBe('Muy buen resumen, me senti identificado');
         expect(res.body.author_id).toBe(2);
         expect(res.body.post_id).toBe(1);
     });
@@ -120,7 +120,7 @@ describe('GET /comments', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
         expect(res.body.author_id).toBe(2);
-        expect(res.body.author_name).toBe('Andrés Pardo');
+        expect(res.body.author_name).toBe('Andres Pardo');
         expect(res.body.author_email).toBe('andres.pardo@devspark.io');
     });
 
@@ -135,7 +135,7 @@ describe('GET /comments', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
         expect(res.body.post_id).toBe(1);
-        expect(res.body.post_title).toBe('Cómo empecé en el desarrollo web');
+        expect(res.body.post_title).toBe('Como empece en el desarrollo web');
     });
 
     test('post de un comentario que no existe', async () => {
@@ -337,7 +337,7 @@ describe('PATCH /comments', () => {
     test('update comentario solo author_id', async () => {
         const res = await request(app).patch('/comments/5').send({author_id: 1});
         expect(res.statusCode).toBe(200);
-        expect(res.body.content).toBe('¿Aplica igual en tablas pequeñas?');
+        expect(res.body.content).toBe('¿Aplica igual en tablas pequenas?');
         expect(res.body.author_id).toBe(1);
         expect(res.body.post_id).toBe(3);
     });
@@ -345,7 +345,7 @@ describe('PATCH /comments', () => {
     test('update comentario solo post_id', async () => {
         const res = await request(app).patch('/comments/5').send({post_id: 1});
         expect(res.statusCode).toBe(200);
-        expect(res.body.content).toBe('¿Aplica igual en tablas pequeñas?');
+        expect(res.body.content).toBe('¿Aplica igual en tablas pequenas?');
         expect(res.body.author_id).toBe(3);
         expect(res.body.post_id).toBe(1);
     });
@@ -408,7 +408,7 @@ describe('DELETE /comments', () => {
         const res = await request(app).delete('/comments/5');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(5);
-        expect(res.body.content).toBe('¿Aplica igual en tablas pequeñas?');
+        expect(res.body.content).toBe('¿Aplica igual en tablas pequenas?');
         expect(res.body.author_id).toBe(3);
         expect(res.body.post_id).toBe(3);
     });

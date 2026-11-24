@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const authorModels = require("../models/authors");
-const { validateId, validateAuthorBody, validateAuthorPatch } = require("../errors/validators");
+const { validateId, validateAuthorBody, validateAuthorPatch,validateAuthorsQuery } = require("../errors/validators");
 const { notFound } = require("../errors/errors");
 
-router.get("/", async (req, res) => {
+router.get("/", validateAuthorsQuery,  async (req, res) => {    
     const results = await authorModels.getAllAuthors(req.query);
     res.status(200).json(results);
 });

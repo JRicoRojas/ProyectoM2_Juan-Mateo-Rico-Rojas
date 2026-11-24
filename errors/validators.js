@@ -12,6 +12,11 @@ function validateEmail(email) {
     if (!email) {
         throw badRequest('Email is required');
     }
+
+    if(typeof email !== 'string'){
+        throw badRequest('Invalid email format');
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         throw badRequest('Invalid email format');
@@ -66,7 +71,6 @@ function validatePostId(id){
     validatePositiveInt(id, 'Post ID');
 }
 
-// Los query params siempre llegan como string (o arreglo si se repiten)
 function validateQueryId(value, label){
     if (value === undefined) return;
 
@@ -74,6 +78,13 @@ function validateQueryId(value, label){
     if (typeof value !== 'string' || value.trim() === '' || !Number.isInteger(number) || number <= 0) {
         throw badRequest(`${label} should be a positive integer`);
     }
+}
+
+function validateAuthorsQuery(req, res, next){
+    const { name, email } = req.query;
+    if(name !== undefined) validateString(name, 'Name');
+    if (email !== undefined) validateEmail(email);
+    next();
 }
 
 function validatePostsQuery(req, res, next){
@@ -165,6 +176,7 @@ module.exports = {
     validateCommentPatch,
     validateAuthorId,
     validatePostId,
+    validateAuthorsQuery,
     validatePostsQuery,
     validateCommentsQuery
 };

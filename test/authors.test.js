@@ -48,15 +48,46 @@ describe ('GET / authors' , () => {
         const res = await request(app).get('/authors').query({email: 'laura.gomez@devspark.io'});
         expect(res.statusCode).toBe(200);
         expect(res.body[0].id).toBe(1);
-        expect(res.body[0].name).toBe('Laura Gómez');
+        expect(res.body[0].name).toBe('Laura Gomez');
         expect(res.body[0].email).toBe('laura.gomez@devspark.io');
-        expect(res.body[0].bio).toBe('Escribe sobre desarrollo web y carreras en tecnología');
+        expect(res.body[0].bio).toBe('Escribe sobre desarrollo web y carreras en tecnologia');
     });
 
     test ('query email sin valores', async () => {
-        const res = await request (app).get('/authors').query({email: 'test'});
+        const res = await request (app).get('/authors').query({email: 'noexiste@test.com'});
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual([]);
+    });
+
+    test ('query email sin formato', async () => {
+        const res = await request (app).get('/authors').query({email: 'test'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
+    });
+
+    test ('query email sin dominio', async () => {
+        const res = await request (app).get('/authors').query({email: 'test@'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
+    });
+
+    test ('query email vacio', async () => {
+        const res = await request (app).get('/authors').query({email: ''});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Email is required');
+    });
+
+    test ('query name y email validos a la vez', async () => {
+        const res = await request (app).get('/authors').query({name: 'laura', email: 'laura.gomez@devspark.io'});
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toHaveLength(1);
+        expect(res.body[0].id).toBe(1);
+    });
+
+    test ('query name valido con email invalido', async () => {
+        const res = await request (app).get('/authors').query({name: 'laura', email: 'abc'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
     });
 
 
@@ -65,9 +96,9 @@ describe ('GET / authors' , () => {
             .get('/authors/1');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.name).toBe('Laura Gomez');
         expect(res.body.email).toBe('laura.gomez@devspark.io');
-        expect(res.body.bio).toBe('Escribe sobre desarrollo web y carreras en tecnología');
+        expect(res.body.bio).toBe('Escribe sobre desarrollo web y carreras en tecnologia');
     });
 
     test('error al no encontrar ID', async()=>{
@@ -102,7 +133,7 @@ describe ('GET / authors' , () => {
         const res = await request(app).get('/authors/1/posts');
         expect(res.statusCode).toBe(200);
         expect(res.body.id).toBe(1);
-        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.name).toBe('Laura Gomez');
         expect(res.body.email).toBe('laura.gomez@devspark.io');
         expect(res.body.posts.map(post => post.id)).toEqual([1, 2]);
     });
@@ -425,7 +456,7 @@ describe('DELETE/authors', () =>{
         expect(res.body.id).toBe(5);
         expect(res.body.name).toBe('Valentina Torres');
         expect(res.body.email).toBe('valentina.torres@devspark.io');
-        expect(res.body.bio).toBe('Escribe reseñas de libros tecnicos');
+        expect(res.body.bio).toBe('Escribe resenas de libros tecnicos');
     });
     test('error ID no es un numero', async()=>{
         const res = await request(app).delete('/authors/abc');
@@ -454,6 +485,50 @@ describe('NOEXISTE/authors', () => {
         const res = await request(app).get('/noexiste');
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('not found');
+    });
+});
+
+describe('Query y body con valores que no son string', () => {
+    test('GET con email repetido', async () => {
+        const res = await request(app).get('/authors?email=abc&email=d@e.com');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
+    });
+
+    test('GET con name repetido', async () => {
+        const res = await request(app).get('/authors?name=a&name=b');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('String');
+    });
+
+    test('GET con name vacio', async () => {
+        const res = await request(app).get('/authors').query({name: ''});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Name is required');
+    });
+
+    test('GET con name solo espacios', async () => {
+        const res = await request(app).get('/authors').query({name: '     '});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Name is required');
+    });
+
+    test('POST con email como arreglo', async () => {
+        const res = await request(app).post('/authors').send({name: 'Test', email: ['test@example.com']});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
+    });
+
+    test('PUT con email como arreglo', async () => {
+        const res = await request(app).put('/authors/5').send({name: 'Test', email: ['test@example.com']});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
+    });
+
+    test('PATCH con email como arreglo', async () => {
+        const res = await request(app).patch('/authors/5').send({email: ['test@example.com']});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Invalid email format');
     });
 });
 

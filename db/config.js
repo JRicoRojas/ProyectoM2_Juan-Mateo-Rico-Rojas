@@ -1,30 +1,17 @@
 const { Pool } = require('pg');
 
-const requireEnvVars = [
-    'DB_HOST',
-    'DB_PORT', 
-    'DB_NAME',
-    'DB_USER',
-    'DB_PASSWORD'
-];
-for(const varName of requireEnvVars){
-    if(!process.env[varName]){
-        console.error(`Error crítico: La variable de entorno ${varName} no está definida en el .env`);
-        process.exit(1);
-    }
+if (!process.env.DATABASE_URL) {
+    console.error('Error critico: La variable de entorno DATABASE_URL no esta definida');
+    process.exit(1);
 }
 
-console.log('Todas las variables de entorno requeridas están presentes');
-
 const pool = new Pool({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    connectionString: process.env.DATABASE_URL,
+    // Solo hace falta con algunas bases externas (por ejemplo la URL publica de Railway)
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
     max: 20,
-    idleTimeoutMillis: 30000, 
-    connectionTimeoutMillis: 2000,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
 });
 
 module.exports = pool;

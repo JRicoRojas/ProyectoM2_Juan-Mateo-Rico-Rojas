@@ -1,5 +1,5 @@
 import { describe, vi, test, expect } from "vitest";
-import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch, validateBoolean, validatePostsBody, validatePostPatch, validateCommentsBody, validateCommentPatch, validateAuthorId, validatePostId, validatePostsQuery, validateCommentsQuery } from "../errors/validators";
+import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch, validateBoolean, validatePostsBody, validatePostPatch, validateCommentsBody, validateCommentPatch, validateAuthorId, validatePostId, validatePostsQuery, validateCommentsQuery, validateAuthorsQuery } from "../errors/validators";
 
 describe('validateId', () => {
     test('ID valido llama next', () => {
@@ -8,25 +8,25 @@ describe('validateId', () => {
         expect(next).toHaveBeenCalledOnce();
     });
     
-    test('ID inválido lanza error', () => {
+    test('ID invalido lanza error', () => {
         const next = vi.fn();
         expect(() => validateId({ params: { id: 'abc' } }, {}, next)).toThrow('ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
     });
 
-    test('ID inválido lanza error', () => {
+    test('ID invalido lanza error', () => {
         const next = vi.fn();
         expect(() => validateId({ params: { id: 0 } }, {}, next)).toThrow('ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
     });
 
-    test('ID inválido lanza error', () => {
+    test('ID invalido lanza error', () => {
         const next = vi.fn();
         expect(() => validateId({ params: { id: -1 } }, {}, next)).toThrow('ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
     });
 
-        test('ID inválido lanza error', () => {
+        test('ID invalido lanza error', () => {
         const next = vi.fn();
         expect(() => validateId({ params: { id: '' } }, {}, next)).toThrow('ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
@@ -409,6 +409,15 @@ describe('validateEmail casos faltantes', () => {
     test('Rechaza email vacio', () => {
         expect(() => validateEmail('')).toThrow('Email is required');
     });
+    test.each([[['x@y.com']], [['a', 'b@c.com']], [[]]])('Rechaza un arreglo como email (%j)', (valor) => {
+        expect(() => validateEmail(valor)).toThrow('Invalid email format');
+    });
+    test.each([[123], [true], [{}]])('Rechaza un tipo que no es string como email (%j)', (valor) => {
+        expect(() => validateEmail(valor)).toThrow('Invalid email format');
+    });
+    test.each([[0], [false], [null]])('Trata %j como email ausente', (valor) => {
+        expect(() => validateEmail(valor)).toThrow('Email is required');
+    });
 });
 
 describe('validateString casos faltantes', () => {
@@ -704,6 +713,77 @@ describe('validatePostsQuery', () => {
     test.each([['maybe'], ['1'], ['TRUE'], ['']])('published %j lanza error', (valor) => {
         const next = vi.fn();
         expect(() => validatePostsQuery({query: {published: valor}}, {}, next)).toThrow("Published should be 'true' or 'false'");
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateAuthorsQuery', () => {
+    test('sin filtros llama a next', () => {
+        const next = vi.fn();
+        validateAuthorsQuery({query: {}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('solo name llama a next', () => {
+        const next = vi.fn();
+        validateAuthorsQuery({query: {name: 'laura'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('email valido llama a next', () => {
+        const next = vi.fn();
+        validateAuthorsQuery({query: {email: 'test@test.com'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('name y email validos llaman a next', () => {
+        const next = vi.fn();
+        validateAuthorsQuery({query: {name: 'laura', email: 'test@test.com'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test.each([['abc'], ['abc@'], ['abc.com'], ['abc@com'], ['a b@test.com']])('email %j lanza Invalid email format', (valor) => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {email: valor}}, {}, next)).toThrow('Invalid email format');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('email vacio lanza Email is required', () => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {email: ''}}, {}, next)).toThrow('Email is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('email invalido lanza error aunque name sea valido', () => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {name: 'laura', email: 'abc'}}, {}, next)).toThrow('Invalid email format');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateAuthorsQuery con name y arreglos', () => {
+    test.each([[''], ['     ']])('name %j lanza Name is required', (valor) => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {name: valor}}, {}, next)).toThrow('Name is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('name repetido (arreglo) lanza error de tipo', () => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {name: ['a', 'b']}}, {}, next)).toThrow("Name should be a 'String'");
+        expect(next).not.toHaveBeenCalled();
+    });
+    test.each([[['abc', 'd@e.com']], [['a@b.com', 'c@d.com']]])('email repetido (arreglo) %j lanza error', (valor) => {
+        const next = vi.fn();
+        expect(() => validateAuthorsQuery({query: {email: valor}}, {}, next)).toThrow('Invalid email format');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('email como arreglo en los validadores de body', () => {
+    test('validateAuthorBody rechaza email como arreglo', () => {
+        const next = vi.fn();
+        const req = {body: {name: 'test', email: ['test@test.com']}};
+        expect(() => validateAuthorBody(req, {}, next)).toThrow('Invalid email format');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('validateAuthorPatch rechaza email como arreglo', () => {
+        const next = vi.fn();
+        const req = {body: {email: ['test@test.com']}};
+        expect(() => validateAuthorPatch(req, {}, next)).toThrow('Invalid email format');
         expect(next).not.toHaveBeenCalled();
     });
 });

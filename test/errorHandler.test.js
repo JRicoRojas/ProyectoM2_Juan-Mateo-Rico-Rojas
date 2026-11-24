@@ -34,14 +34,14 @@ describe('errorHandler', () => {
 
     test('error sin code responde 500 con su mensaje', () => {
         const res = mockRes();
-        errorHandler(new Error('algo falló'), {}, res, vi.fn());
+        errorHandler(new Error('algo fallo'), {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ error: 'algo falló' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'algo fallo' });
     });
 
     test('code no entero (string de pg) responde 500', () => {
         const res = mockRes();
-        const err = new Error('conexión rechazada');
+        const err = new Error('conexion rechazada');
         err.code = 'ECONNREFUSED';
         errorHandler(err, {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(500);
@@ -73,7 +73,7 @@ describe('errorHandler', () => {
 
     test('constraint conocida (authors_email_key) responde 409', () => {
         const res = mockRes();
-        const err = new Error('llave duplicada viola restricción de unicidad «authors_email_key»');
+        const err = new Error('llave duplicada viola restriccion de unicidad «authors_email_key»');
         err.code = '23505';
         err.constraint = 'authors_email_key';
         errorHandler(err, {}, res, vi.fn());
@@ -83,7 +83,7 @@ describe('errorHandler', () => {
 
     test('constraint conocida (posts_author_id_fkey) responde 400', () => {
         const res = mockRes();
-        const err = new Error('inserción o actualización en la tabla «posts» viola la llave foránea «posts_author_id_fkey»');
+        const err = new Error('insercion o actualizacion en la tabla «posts» viola la llave foranea «posts_author_id_fkey»');
         err.code = '23503';
         err.constraint = 'posts_author_id_fkey';
         errorHandler(err, {}, res, vi.fn());
@@ -93,11 +93,11 @@ describe('errorHandler', () => {
 
     test('constraint desconocida cae al flujo normal (500)', () => {
         const res = mockRes();
-        const err = new Error('otra restricción');
+        const err = new Error('otra restriccion');
         err.code = '23505';
         err.constraint = 'otra_constraint';
         errorHandler(err, {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ error: 'otra restricción' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'otra restriccion' });
     });
 });
