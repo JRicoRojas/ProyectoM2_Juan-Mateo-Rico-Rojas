@@ -157,6 +157,60 @@ describe('GET /posts', () => {
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('integer');
     });
+
+    test('Obtener los posts de un autor', async () => {
+        const res = await request(app).get('/posts/author/1');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(1);
+        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.email).toBe('laura.gomez@devspark.io');
+        expect(res.body.posts).toHaveLength(2);
+        expect(res.body.posts).toEqual([
+            {id: 1, title: 'Cómo empecé en el desarrollo web', content: 'Mi ruta de aprendizaje en el primer año...'},
+            {id: 2, title: 'Errores comunes con Git', content: 'Los tres tropiezos que más veo en principiantes...'},
+        ]);
+    });
+
+    test('autor con posts de otro autor no se mezclan', async () => {
+        const res = await request(app).get('/posts/author/2');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.name).toBe('Andrés Pardo');
+        expect(res.body.posts.map(post => post.id)).toEqual([3, 4]);
+    });
+
+    test('autor sin posts devuelve la lista vacia', async () => {
+        const res = await request(app).get('/posts/author/3');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(3);
+        expect(res.body.name).toBe('Camila Rojas');
+        expect(res.body.posts).toEqual([]);
+    });
+
+    test('posts de un autor que no existe', async () => {
+        const res = await request(app).get('/posts/author/999');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toBe('Author not found');
+    });
+
+    test('posts de un autor con ID no numerico', async () => {
+        const res = await request(app).get('/posts/author/abc');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('posts de un autor con ID cero', async () => {
+        const res = await request(app).get('/posts/author/0');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('/posts/author/:id no se confunde con /posts/:id/author', async () => {
+        const porAutor = await request(app).get('/posts/author/1');
+        const porPost = await request(app).get('/posts/1/author');
+        expect(porAutor.body.posts).toBeDefined();
+        expect(porPost.body.posts).toBeUndefined();
+        expect(porPost.body.author_name).toBe('Laura Gómez');
+    });
 });
 
 describe('POST /posts', () => {

@@ -1,0 +1,909 @@
+openapi: 3.0.3
+info:
+  title: Blog API - Authors, Posts y Comments
+  version: 1.0.0
+  description: |
+    API REST construida con Node.js, Express y PostgreSQL para gestionar
+    autores (authors), publicaciones (posts) y comentarios (comments).
+
+    Todos los errores se devuelven con el formato `{ "error": "mensaje" }`.
+  contact:
+    name: Mateo Rico
+    url: https://github.com/JRicoRojas/ProyectoM2_Juan-Mateo-Rico-Rojas
+  license:
+    name: ISC
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local de desarrollo
+
+tags:
+  - name: Authors
+    description: Gestión de autores
+  - name: Posts
+    description: Gestión de publicaciones
+  - name: Comments
+    description: Gestión de comentarios
+
+paths:
+  # ───────────────────────────── AUTHORS ─────────────────────────────
+  /authors:
+    get:
+      tags: [Authors]
+      summary: Listar autores
+      description: Devuelve todos los autores ordenados por `id`. Se puede filtrar por nombre (búsqueda parcial, sin distinguir mayúsculas) y por email exacto.
+      operationId: getAllAuthors
+      parameters:
+        - name: name
+          in: query
+          required: false
+          description: Filtra por nombre (coincidencia parcial, `ILIKE`).
+          schema:
+            type: string
+          example: ana
+        - name: email
+          in: query
+          required: false
+          description: Filtra por email exacto.
+          schema:
+            type: string
+            format: email
+          example: ana@example.com
+      responses:
+        '200':
+          description: Lista de autores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Author'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Authors]
+      summary: Crear un autor
+      operationId: createAuthor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorInput'
+      responses:
+        '201':
+          description: Autor creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/EmailConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /authors/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Authors]
+      summary: Obtener un autor por ID
+      operationId: getAuthorById
+      responses:
+        '200':
+          description: Autor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Authors]
+      summary: Reemplazar un autor
+      description: Reemplaza todos los campos del autor. `name` y `email` son obligatorios; si no se envía `bio` quedará en `null`.
+      operationId: replaceAuthor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorInput'
+      responses:
+        '200':
+          description: Autor reemplazado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/EmailConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Authors]
+      summary: Actualizar parcialmente un autor
+      description: Actualiza solo los campos enviados. Se requiere al menos un campo.
+      operationId: updateAuthor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorPatch'
+      responses:
+        '200':
+          description: Autor actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/EmailConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Authors]
+      summary: Eliminar un autor
+      description: Elimina el autor y, en cascada, sus posts y comentarios. Devuelve el autor eliminado.
+      operationId: deleteAuthor
+      responses:
+        '200':
+          description: Autor eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /authors/{id}/posts:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Authors]
+      summary: Obtener un autor con sus posts
+      operationId: getAuthorPosts
+      responses:
+        '200':
+          description: Autor con la lista de sus posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorWithPosts'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ────────────────────────────── POSTS ──────────────────────────────
+  /posts:
+    get:
+      tags: [Posts]
+      summary: Listar posts
+      description: Devuelve todos los posts ordenados por `id`, con filtros opcionales.
+      operationId: getAllPosts
+      parameters:
+        - name: title
+          in: query
+          required: false
+          description: Filtra por título (coincidencia parcial, `ILIKE`).
+          schema:
+            type: string
+          example: node
+        - name: published
+          in: query
+          required: false
+          description: Filtra por estado de publicación.
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: author_id
+          in: query
+          required: false
+          description: Filtra por ID del autor (entero positivo).
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Lista de posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Posts]
+      summary: Crear un post
+      description: Si no se envía `published`, se guarda como `true`.
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '201':
+          description: Post creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Body inválido o el autor no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validacion:
+                  value: { error: 'Title is required' }
+                autorInexistente:
+                  value: { error: 'Author does not exist' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /posts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Posts]
+      summary: Obtener un post por ID
+      operationId: getPostById
+      responses:
+        '200':
+          description: Post encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Posts]
+      summary: Reemplazar un post
+      description: Reemplaza todos los campos del post. Si no se envía `published`, se guarda como `true`.
+      operationId: replacePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostInput'
+      responses:
+        '200':
+          description: Post reemplazado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Posts]
+      summary: Actualizar parcialmente un post
+      description: Actualiza solo los campos enviados. Se requiere al menos un campo.
+      operationId: updatePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPatch'
+      responses:
+        '200':
+          description: Post actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Posts]
+      summary: Eliminar un post
+      description: Elimina el post y, en cascada, sus comentarios. Devuelve el post eliminado.
+      operationId: deletePost
+      responses:
+        '200':
+          description: Post eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /posts/{id}/author:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Posts]
+      summary: Obtener un post con los datos de su autor
+      operationId: getPostAuthor
+      responses:
+        '200':
+          description: Post con nombre y email del autor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostWithAuthor'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /posts/author/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID del autor (entero positivo).
+        schema:
+          type: integer
+          minimum: 1
+        example: 1
+    get:
+      tags: [Posts]
+      summary: Obtener los posts de un autor
+      description: Equivalente a `GET /authors/{id}/posts`.
+      operationId: getPostsByAuthor
+      responses:
+        '200':
+          description: Autor con la lista de sus posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorWithPosts'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ──────────────────────────── COMMENTS ─────────────────────────────
+  /comments:
+    get:
+      tags: [Comments]
+      summary: Listar comentarios
+      description: Devuelve todos los comentarios ordenados por `id`, con filtros opcionales.
+      operationId: getAllComments
+      parameters:
+        - name: author_id
+          in: query
+          required: false
+          description: Filtra por ID del autor (entero positivo).
+          schema:
+            type: integer
+            minimum: 1
+        - name: post_id
+          in: query
+          required: false
+          description: Filtra por ID del post (entero positivo).
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Lista de comentarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Comments]
+      summary: Crear un comentario
+      operationId: createComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentInput'
+      responses:
+        '201':
+          description: Comentario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          description: Body inválido, o el autor / post no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validacion:
+                  value: { error: 'Content is required' }
+                autorInexistente:
+                  value: { error: 'Author does not exist' }
+                postInexistente:
+                  value: { error: 'Post does not exist' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /comments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Comments]
+      summary: Obtener un comentario por ID
+      operationId: getCommentById
+      responses:
+        '200':
+          description: Comentario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Comments]
+      summary: Reemplazar un comentario
+      operationId: replaceComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentInput'
+      responses:
+        '200':
+          description: Comentario reemplazado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [Comments]
+      summary: Actualizar parcialmente un comentario
+      description: Actualiza solo los campos enviados. Se requiere al menos un campo.
+      operationId: updateComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentPatch'
+      responses:
+        '200':
+          description: Comentario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Comments]
+      summary: Eliminar un comentario
+      description: Devuelve el comentario eliminado.
+      operationId: deleteComment
+      responses:
+        '200':
+          description: Comentario eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /comments/{id}/author:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Comments]
+      summary: Obtener un comentario con los datos de su autor
+      operationId: getCommentAuthor
+      responses:
+        '200':
+          description: Comentario con nombre y email del autor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentWithAuthor'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /comments/{id}/post:
+    parameters:
+      - $ref: '#/components/parameters/IdParam'
+    get:
+      tags: [Comments]
+      summary: Obtener un comentario con el título de su post
+      operationId: getCommentPost
+      responses:
+        '200':
+          description: Comentario con el título del post
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentWithPost'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      description: ID del recurso (entero positivo).
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+
+  schemas:
+    # ── Authors ──
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          maxLength: 100
+          example: Ana López
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          example: ana@example.com
+        bio:
+          type: string
+          nullable: true
+          example: Desarrolladora backend.
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-11-24T15:30:00.000Z'
+    AuthorInput:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Ana López
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          example: ana@example.com
+        bio:
+          type: string
+          minLength: 1
+          description: Opcional. Si se envía, no puede ser un string vacío.
+          example: Desarrolladora backend.
+    AuthorPatch:
+      type: object
+      minProperties: 1
+      description: Al menos uno de los campos es obligatorio.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        bio:
+          type: string
+          minLength: 1
+      example:
+        bio: Nueva biografía.
+    AuthorWithPosts:
+      allOf:
+        - $ref: '#/components/schemas/Author'
+        - type: object
+          properties:
+            posts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  title:
+                    type: string
+                    example: Mi primer post
+                  content:
+                    type: string
+                    example: Contenido del post.
+
+    # ── Posts ──
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          maxLength: 100
+          example: Mi primer post
+        content:
+          type: string
+          example: Contenido del post.
+        author_id:
+          type: integer
+          example: 1
+        published:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-11-24T15:30:00.000Z'
+    PostInput:
+      type: object
+      required: [title, content, author_id]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Mi primer post
+        content:
+          type: string
+          minLength: 1
+          example: Contenido del post.
+        published:
+          type: boolean
+          default: true
+          example: true
+        author_id:
+          type: integer
+          minimum: 1
+          example: 1
+    PostPatch:
+      type: object
+      minProperties: 1
+      description: Al menos uno de los campos es obligatorio.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        content:
+          type: string
+          minLength: 1
+        published:
+          type: boolean
+        author_id:
+          type: integer
+          minimum: 1
+      example:
+        published: false
+    PostWithAuthor:
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            author_name:
+              type: string
+              nullable: true
+              example: Ana López
+            author_email:
+              type: string
+              format: email
+              nullable: true
+              example: ana@example.com
+
+    # ── Comments ──
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        content:
+          type: string
+          example: ¡Muy buen post!
+        author_id:
+          type: integer
+          example: 1
+        post_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: '2026-11-24T15:30:00.000Z'
+    CommentInput:
+      type: object
+      required: [content, author_id, post_id]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          example: ¡Muy buen post!
+        author_id:
+          type: integer
+          minimum: 1
+          example: 1
+        post_id:
+          type: integer
+          minimum: 1
+          example: 1
+    CommentPatch:
+      type: object
+      minProperties: 1
+      description: Al menos uno de los campos es obligatorio.
+      properties:
+        content:
+          type: string
+          minLength: 1
+        author_id:
+          type: integer
+          minimum: 1
+        post_id:
+          type: integer
+          minimum: 1
+      example:
+        content: Comentario editado.
+    CommentWithAuthor:
+      allOf:
+        - $ref: '#/components/schemas/Comment'
+        - type: object
+          properties:
+            author_name:
+              type: string
+              nullable: true
+              example: Ana López
+            author_email:
+              type: string
+              format: email
+              nullable: true
+              example: ana@example.com
+    CommentWithPost:
+      allOf:
+        - $ref: '#/components/schemas/Comment'
+        - type: object
+          properties:
+            post_title:
+              type: string
+              nullable: true
+              example: Mi primer post
+
+    # ── Errores ──
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Mensaje de error
+
+  responses:
+    BadRequest:
+      description: Datos inválidos (body, query o ID) o referencia a un recurso inexistente
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            campoRequerido:
+              value: { error: 'Name is required' }
+            sinCampos:
+              value: { error: 'At least one field is required' }
+            idInvalido:
+              value: { error: 'ID should be a positive integer' }
+    InvalidId:
+      description: El ID no es un entero positivo
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: ID should be a positive integer
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Author not found
+    EmailConflict:
+      description: Ya existe un autor con ese email
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Author email already exists
+    InternalError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Internal server error

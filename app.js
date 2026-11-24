@@ -8,6 +8,12 @@ const {errorHandler} = require("./errors/errorHandler");
 const {notFound} = require("./errors/errors");
 
 app.use(express.json());
+
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const swaggerDocument = YAML.load(require("path").join(__dirname, "openapi.yaml"));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 app.use('/authors', routerAuthors);
 app.use('/posts', routerPosts);
 app.use('/comments', routerComments);

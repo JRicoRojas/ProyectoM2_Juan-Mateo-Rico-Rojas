@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authorModels = require("../models/authors");
 const postsModels = require("../models/posts");
 const { validateId, validatePostsBody, validatePostPatch, validatePostsQuery } = require("../errors/validators");
 const { notFound } = require("../errors/errors");
@@ -22,6 +23,14 @@ router.get("/:id/author", validateId, async (req, res) => {
     if (!results) throw notFound('Post not found');
     res.status(200).json(results);
 });
+
+router.get("/author/:id", validateId, async (req, res) => {
+    const id = Number(req.params.id);
+    const results = await authorModels.getAuthorPosts(id);
+    if (!results) throw notFound('Author not found');
+    res.status(200).json(results);
+});
+
 
 router.post("/", validatePostsBody, async (req, res) => {
     const { title, content, published, author_id } = req.body;

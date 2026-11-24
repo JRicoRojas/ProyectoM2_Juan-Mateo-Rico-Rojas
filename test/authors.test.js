@@ -97,6 +97,40 @@ describe ('GET / authors' , () => {
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('integer');
     });
+
+    test('Obtener un autor con sus posts', async () => {
+        const res = await request(app).get('/authors/1/posts');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.id).toBe(1);
+        expect(res.body.name).toBe('Laura Gómez');
+        expect(res.body.email).toBe('laura.gomez@devspark.io');
+        expect(res.body.posts.map(post => post.id)).toEqual([1, 2]);
+    });
+
+    test('autor sin posts devuelve la lista vacia', async () => {
+        const res = await request(app).get('/authors/5/posts');
+        expect(res.statusCode).toBe(200);
+        expect(res.body.name).toBe('Valentina Torres');
+        expect(res.body.posts).toEqual([]);
+    });
+
+    test('posts de un autor que no existe', async () => {
+        const res = await request(app).get('/authors/999/posts');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toBe('Author not found');
+    });
+
+    test('posts de un autor con ID invalido', async () => {
+        const res = await request(app).get('/authors/abc/posts');
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toContain('integer');
+    });
+
+    test('/authors/:id/posts y /posts/author/:id devuelven lo mismo', async () => {
+        const porAutores = await request(app).get('/authors/1/posts');
+        const porPosts = await request(app).get('/posts/author/1');
+        expect(porPosts.body).toEqual(porAutores.body);
+    });
 });
 
 describe('POST/authors', () => {
