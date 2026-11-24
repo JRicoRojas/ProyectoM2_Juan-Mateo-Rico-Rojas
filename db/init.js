@@ -2,10 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./config');
 
-// Crea las tablas (schema.sql) y carga los datos de ejemplo (seed.sql).
-// ATENCION: schema.sql borra las tablas existentes antes de crearlas.
-// Uso: npm run db:init           -> tablas + datos de ejemplo
-//      npm run db:schema         -> solo tablas
 async function runFile(name) {
     const sql = fs.readFileSync(path.join(__dirname, name), 'utf8');
     await pool.query(sql);

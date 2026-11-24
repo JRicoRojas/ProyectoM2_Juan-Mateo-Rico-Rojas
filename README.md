@@ -4,7 +4,7 @@ API REST para gestionar **authors** (usuarios), **posts** (publicaciones) y **co
 
 - **Stack:** Node.js + Express 5, PostgreSQL con `pg` (consultas SQL directas y parametrizadas), Vitest + Supertest para los tests, OpenAPI 3 con Swagger UI.
 - **Documentacion interactiva:** `/api-docs` (Swagger UI) y el archivo [`openapi.yaml`](./openapi.yaml).
-- **API desplegada:** `<URL_PUBLICA>`  (documentacion en `<URL_PUBLICA>/api-docs`)
+- **API desplegada:** `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app`  (documentacion en `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app/api-docs`)
 
 ## Contenido
 
@@ -39,6 +39,8 @@ comments (id, content, author_id FK, post_id FK, created_at)
 - Los scripts estan en [`db/schema.sql`](./db/schema.sql) (tablas e indices) y [`db/seed.sql`](./db/seed.sql) (datos de ejemplo).
 
 ## Endpoints
+
+`GET /` devuelve la informacion de la API (nombre, version, lista de endpoints) y el enlace a la documentacion (`/api-docs`).
 
 ### Authors
 
@@ -179,7 +181,7 @@ Los tests de endpoints usan la **base real definida en `DATABASE_URL`** y ejecut
 La especificacion esta en [`openapi.yaml`](./openapi.yaml) (OpenAPI 3.0.3) y se sirve con Swagger UI:
 
 - Local: `http://localhost:3000/api-docs`
-- Desplegada: `<URL_PUBLICA>/api-docs`
+- Desplegada: `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app/api-docs`
 
 Tambien puedes abrir el archivo en [editor.swagger.io](https://editor.swagger.io) o importarlo en Postman.
 
@@ -203,14 +205,30 @@ Tambien puedes abrir el archivo en [editor.swagger.io](https://editor.swagger.io
 
    Si la conexion exige SSL, agrega `DB_SSL=true`. Tambien puedes usar la CLI de Railway (`railway run npm run db:init`).
 6. En el servicio de la API, pestana **Settings** > **Networking**, pulsa **Generate Domain** para obtener la URL publica.
-7. Verifica: abre `<URL_PUBLICA>/api-docs` y prueba `GET <URL_PUBLICA>/authors`.
+7. Verifica: abre `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app/api-docs` y prueba `GET https://proyectom2juan-mateo-rico-rojas-production.up.railway.app/authors`.
 
 | | URL |
 |---|---|
-| **URL publica de la API** | `<URL_PUBLICA>` |
-| **URL interna** (solo entre servicios de Railway) | `<URL_INTERNA>` (por ejemplo `miniblog.railway.internal`) |
-| **Documentacion** | `<URL_PUBLICA>/api-docs` |
-| **Captura del despliegue** | `<ENLACE_O_ARCHIVO>` |
+| **URL publica de la API** | `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app` |
+| **URL interna de la API** (solo accesible entre servicios del proyecto en Railway) | `http://proyectom2juan-mateo-rico-rojas.railway.internal:8080` |
+| **URL interna de la base de datos** (solo accesible entre servicios del proyecto en Railway) | `postgres.railway.internal:5432` |
+| **Documentacion** | `https://proyectom2juan-mateo-rico-rojas-production.up.railway.app/api-docs` |
+
+La API se conecta a la base de datos por la **URL interna** (`postgres.railway.internal`), a traves de la variable `DATABASE_URL` que referencia al servicio PostgreSQL. La base tambien tiene un dominio publico (proxy TCP) que se usa solo para ejecutar `npm run db:init` desde un computador.
+
+### Capturas del despliegue
+
+**1. Despliegue activo y exitoso** (pestana **Deployments** del servicio de la API, Node 22, 1 replica):
+
+![Despliegue activo de la API en Railway](./docs/railway-deployment.png)
+
+**2. Red del servicio de la API** (**Settings** > **Networking**): dominio publico, puerto `8080` y URL interna `proyectom2juan-mateo-rico-rojas.railway.internal`:
+
+![Red publica y privada del servicio de la API en Railway](./docs/railway-api-networking.png)
+
+**3. Red del servicio PostgreSQL** (**Settings** > **Networking**): red publica (proxy TCP) y URL interna `postgres.railway.internal`:
+
+![Redes publica y privada del servicio PostgreSQL en Railway](./docs/railway-postgres-networking.png)
 
 Cada `push` a la rama principal despliega automaticamente la nueva version.
 
@@ -248,8 +266,10 @@ Herramienta: **Claude Code** (asistente de IA de Anthropic) dentro de VS Code, e
 | Tests de validadores, errorHandler y endpoints de authors | Yo con ayuda | Escribi los primeros; la IA reviso que casos faltaban |
 | Tests de posts y comments, y casos adicionales de validadores | IA | Los escribio la IA a partir de mis rutas y el seed; yo los ejecute y revise |
 | Refactor de validadores (`validatePositiveInt`, validadores de query params) | IA | Propuesto por la IA y aplicado en la sesion |
+| Ruta de inicio `GET /` | Yo (borrador) + IA | Yo escribi el borrador de la ruta; la IA corrigio las rutas que listaba y escribio su test (`test/root.test.js`) |
 | Preparacion para Railway (`start`, `db/init.js`, `DATABASE_URL`, indices, `.env.example`) y este README | IA, yo revise | |
-| `openapi.yaml` | `[COMPLETAR: indica si lo generaste con IA y con que herramienta, o si lo escribiste a mano]` | |
+| Diagnostico del despliegue en Railway | IA, yo aplique | Con los logs que le pegue, la IA identifico que faltaba la variable `DATABASE_URL` en el servicio de la API; yo la configure en Railway |
+| `openapi.yaml` | Yo (base) + IA (detalles) | Yo escribi la base del archivo (rutas, metodos y esquemas). La IA agrego detalles y ajustes, por ejemplo los ejemplos de respuesta del error 404 para authors, posts y comments |
 
 ### Errores que la IA encontro en mi codigo y yo corregi
 
@@ -265,6 +285,7 @@ Herramienta: **Claude Code** (asistente de IA de Anthropic) dentro de VS Code, e
 | `errorHandler` ignoraba `err.status` | Un JSON mal formado respondia 500 en vez de 400 |
 | `validateEmail` aceptaba un arreglo con forma de email | Pasaba la validacion en el body y en el query |
 | Script `start` invalido (`npm server.js`) y dependencias `install` y `npm` instaladas por error | Fallaria el despliegue |
+| La ruta de inicio `GET /` listaba `/api/authors` y `/api/posts`, que no existen, y no incluia `/comments` | Los enlaces del inicio daban 404 |
 
 ### Como verifique lo que propuso la IA
 

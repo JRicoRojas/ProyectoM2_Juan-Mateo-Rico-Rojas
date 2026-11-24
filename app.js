@@ -18,6 +18,21 @@ app.use('/authors', routerAuthors);
 app.use('/posts', routerPosts);
 app.use('/comments', routerComments);
 
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'MiniBlog API',
+    description: 'API REST para gestionar authors, posts y comments',
+    version: '1.0.0',
+    docs: '/api-docs',
+    endpoints: {
+      authors: '/authors',
+      posts: '/posts',
+      comments: '/comments'
+    }
+  });
+});
+
 app.use((req, res, next) => {
   next(notFound(`Route not found ${req.originalUrl}`));
 });
