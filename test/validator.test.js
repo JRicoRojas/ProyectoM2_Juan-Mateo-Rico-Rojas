@@ -1,5 +1,5 @@
 import { describe, vi, test, expect } from "vitest";
-import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch, validateBoolean, validatePostsBody, validatePostPatch } from "../errors/validators";
+import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch, validateBoolean, validatePostsBody, validatePostPatch, validateCommentsBody, validateCommentPatch, validateAuthorId, validatePostId, validatePostsQuery, validateCommentsQuery } from "../errors/validators";
 
 describe('validateId', () => {
     test('ID valido llama next', () => {
@@ -95,14 +95,14 @@ describe('validateBio', ()=>{
     });
 
     test ('No acepta bio sin texto', () =>{
-        expect(()=>validateBio(111)).toThrow('Bio should be a "String"');
+        expect(()=>validateBio(111)).toThrow("Bio should be a 'String'");
     });
 
     test ('No acepta bio solo espacios', () =>{
         expect(()=>validateBio('       ')).toThrow('Bio is required');
     });
-    test ('No acepta bio solo espacios', () =>{
-        expect(()=>validateBio(null)).toThrow('Bio should be a "String"');
+    test ('No acepta bio null', () =>{
+        expect(()=>validateBio(null)).toThrow("Bio should be a 'String'");
     });
 });
 
@@ -545,6 +545,188 @@ describe('validatePostsBody casos de error', () => {
     test('request sin body', () => {
         const next = vi.fn();
         expect(() => validatePostsBody({}, {}, next)).toThrow('Title is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('author_id cero', () => {
+        const next = vi.fn();
+        const req = {body: {title: 'Test title', content: 'test content', author_id: 0}};
+        expect(() => validatePostsBody(req, {}, next)).toThrow('Author ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateString con valores falsy', () => {
+    test.each([[0], [false]])('rechaza %j como tipo incorrecto, no como vacio', (valor) => {
+        expect(() => validateString(valor, 'Name')).toThrow("Name should be a 'String'");
+    });
+});
+
+describe('validateAuthorId y validatePostId', () => {
+    test('acepta un entero positivo', () => {
+        expect(() => validateAuthorId(1)).not.toThrow();
+        expect(() => validatePostId(1)).not.toThrow();
+    });
+    test.each([[undefined], [null]])('falta (%j) lanza required', (valor) => {
+        expect(() => validateAuthorId(valor)).toThrow('Author ID is required');
+        expect(() => validatePostId(valor)).toThrow('Post ID is required');
+    });
+    test.each([[0], [-1], [1.5], ['abc'], ['1'], [true]])('rechaza %j como entero positivo', (valor) => {
+        expect(() => validateAuthorId(valor)).toThrow('Author ID should be a positive integer');
+        expect(() => validatePostId(valor)).toThrow('Post ID should be a positive integer');
+    });
+});
+
+describe('validateCommentsBody', () => {
+    const validBody = () => ({content: 'Buen post', author_id: 1, post_id: 1});
+
+    test('body completo llama a next', () => {
+        const next = vi.fn();
+        validateCommentsBody({body: validBody()}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('sin content', () => {
+        const next = vi.fn();
+        const body = validBody(); delete body.content;
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Content is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('content solo espacios', () => {
+        const next = vi.fn();
+        const body = {...validBody(), content: '     '};
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Content is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('content que no es string', () => {
+        const next = vi.fn();
+        const body = {...validBody(), content: 123};
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow("Content should be a 'String'");
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('sin author_id', () => {
+        const next = vi.fn();
+        const body = validBody(); delete body.author_id;
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Author ID is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('sin post_id', () => {
+        const next = vi.fn();
+        const body = validBody(); delete body.post_id;
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Post ID is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('author_id letras', () => {
+        const next = vi.fn();
+        const body = {...validBody(), author_id: 'abc'};
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Author ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('post_id cero', () => {
+        const next = vi.fn();
+        const body = {...validBody(), post_id: 0};
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Post ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('post_id decimal', () => {
+        const next = vi.fn();
+        const body = {...validBody(), post_id: 1.5};
+        expect(() => validateCommentsBody({body}, {}, next)).toThrow('Post ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('request sin body', () => {
+        const next = vi.fn();
+        expect(() => validateCommentsBody({}, {}, next)).toThrow('Content is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateCommentPatch', () => {
+    test.each([
+        [{content: 'nuevo contenido'}],
+        [{author_id: 2}],
+        [{post_id: 2}],
+        [{content: 'nuevo', author_id: 2}],
+        [{content: 'nuevo', post_id: 2}],
+        [{author_id: 2, post_id: 2}],
+        [{content: 'nuevo', author_id: 2, post_id: 2}],
+    ])('body %j llama a next', (body) => {
+        const next = vi.fn();
+        validateCommentPatch({body}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('body vacio', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({body: {}}, {}, next)).toThrow('At least one field is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('request sin body', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({}, {}, next)).toThrow('At least one field is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('content solo espacios', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({body: {content: '     '}}, {}, next)).toThrow('Content is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('content que no es string', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({body: {content: 123}}, {}, next)).toThrow("Content should be a 'String'");
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('author_id invalido', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({body: {author_id: -1}}, {}, next)).toThrow('Author ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('post_id invalido', () => {
+        const next = vi.fn();
+        expect(() => validateCommentPatch({body: {post_id: 'abc'}}, {}, next)).toThrow('Post ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validatePostsQuery', () => {
+    test('sin filtros llama a next', () => {
+        const next = vi.fn();
+        validatePostsQuery({query: {}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('filtros validos llaman a next', () => {
+        const next = vi.fn();
+        validatePostsQuery({query: {author_id: '1', published: 'false', title: 'git'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test.each([['abc'], ['0'], ['-1'], ['1.5'], [''], [['1', '2']]])('author_id %j lanza error', (valor) => {
+        const next = vi.fn();
+        expect(() => validatePostsQuery({query: {author_id: valor}}, {}, next)).toThrow('Author ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test.each([['maybe'], ['1'], ['TRUE'], ['']])('published %j lanza error', (valor) => {
+        const next = vi.fn();
+        expect(() => validatePostsQuery({query: {published: valor}}, {}, next)).toThrow("Published should be 'true' or 'false'");
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateCommentsQuery', () => {
+    test('sin filtros llama a next', () => {
+        const next = vi.fn();
+        validateCommentsQuery({query: {}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('filtros validos llaman a next', () => {
+        const next = vi.fn();
+        validateCommentsQuery({query: {author_id: '1', post_id: '2'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test.each([['abc'], ['0'], ['-1'], ['1.5'], ['']])('author_id %j lanza error', (valor) => {
+        const next = vi.fn();
+        expect(() => validateCommentsQuery({query: {author_id: valor}}, {}, next)).toThrow('Author ID should be a positive integer');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test.each([['abc'], ['0'], ['-1'], ['1.5'], ['']])('post_id %j lanza error', (valor) => {
+        const next = vi.fn();
+        expect(() => validateCommentsQuery({query: {post_id: valor}}, {}, next)).toThrow('Post ID should be a positive integer');
         expect(next).not.toHaveBeenCalled();
     });
 });

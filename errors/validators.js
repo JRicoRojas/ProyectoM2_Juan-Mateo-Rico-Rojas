@@ -19,14 +19,9 @@ function validateEmail(email) {
 }
 
 function validateString(string, name) {
-
-    if (!string || (typeof string === 'string' && !string.trim())) {
+    if (string === undefined || string === null || (typeof string === 'string' && !string.trim())) {
         throw badRequest(`${name} is required`);
     }
-    if (typeof string !== 'string') {
-        throw badRequest(`${name} should be a 'String'`);
-    }
-
     if (typeof string !== 'string') {
         throw badRequest(`${name} should be a 'String'`);
     }
@@ -40,7 +35,7 @@ function validateBio(bio) {
     }
 
     if (typeof bio !== 'string') {
-        throw badRequest('Bio should be a "String"');
+        throw badRequest("Bio should be a 'String'");
     }
 }
 
@@ -53,14 +48,48 @@ function validateBoolean(boolean, name){
     }
 }
 
-function validateAuthorId(id){
-    if (!id) {
-        throw badRequest('Author ID is required');
+function validatePositiveInt(value, label){
+    if (value === undefined || value === null) {
+        throw badRequest(`${label} is required`);
     }
 
-    if (!Number.isInteger(id) || id <= 0) {
-        throw badRequest('Author ID should be a positive integer');
+    if (!Number.isInteger(value) || value <= 0) {
+        throw badRequest(`${label} should be a positive integer`);
     }
+}
+
+function validateAuthorId(id){
+    validatePositiveInt(id, 'Author ID');
+}
+
+function validatePostId(id){
+    validatePositiveInt(id, 'Post ID');
+}
+
+// Los query params siempre llegan como string (o arreglo si se repiten)
+function validateQueryId(value, label){
+    if (value === undefined) return;
+
+    const number = Number(value);
+    if (typeof value !== 'string' || value.trim() === '' || !Number.isInteger(number) || number <= 0) {
+        throw badRequest(`${label} should be a positive integer`);
+    }
+}
+
+function validatePostsQuery(req, res, next){
+    const { author_id, published } = req.query;
+    validateQueryId(author_id, 'Author ID');
+    if (published !== undefined && published !== 'true' && published !== 'false') {
+        throw badRequest("Published should be 'true' or 'false'");
+    }
+    next();
+}
+
+function validateCommentsQuery(req, res, next){
+    const { author_id, post_id } = req.query;
+    validateQueryId(author_id, 'Author ID');
+    validateQueryId(post_id, 'Post ID');
+    next();
 }
 
 function validateAuthorBody(req, res, next) {
@@ -103,6 +132,25 @@ function validatePostPatch(req, res, next) {
     next();
 }
 
+function validateCommentsBody (req, res, next){
+    const {content, author_id, post_id} = req.body ?? {};
+    validateString(content, 'Content');
+    validateAuthorId(author_id);
+    validatePostId(post_id);
+    next();
+}
+
+function validateCommentPatch(req, res, next) {
+    const { content, author_id, post_id } = req.body ?? {};
+    if (content === undefined && author_id === undefined && post_id === undefined) {
+        throw badRequest('At least one field is required');
+    }
+    if (content !== undefined) validateString(content, 'Content');
+    if (author_id !== undefined ) validateAuthorId(author_id);
+    if (post_id !== undefined ) validatePostId(post_id);
+    next();
+}
+
 module.exports = {
     validateId,
     validateEmail,
@@ -112,5 +160,11 @@ module.exports = {
     validateAuthorPatch,
     validateBoolean,
     validatePostsBody,
-    validatePostPatch
+    validatePostPatch,
+    validateCommentsBody,
+    validateCommentPatch,
+    validateAuthorId,
+    validatePostId,
+    validatePostsQuery,
+    validateCommentsQuery
 };

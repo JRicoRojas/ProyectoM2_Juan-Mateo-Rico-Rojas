@@ -10,13 +10,15 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", validateId, async (req, res) => {
-    const results = await authorModels.getAuthorsByID(req.params.id);
+    const id = Number(req.params.id);
+    const results = await authorModels.getAuthorsByID(id);
     if (!results) throw notFound('Author not found');
     res.status(200).json(results);
 });
 
 router.get("/:id/posts", validateId, async (req, res) => {
-    const results = await authorModels.getAuthorPosts(req.params.id);
+    const id = Number(req.params.id);
+    const results = await authorModels.getAuthorPosts(id);
     if (!results) throw notFound('Author not found');
     res.status(200).json(results);
 });
@@ -28,15 +30,17 @@ router.post("/", validateAuthorBody, async (req, res) => {
 });
 
 router.put("/:id", validateId, validateAuthorBody, async (req, res) => {
+    const id = Number(req.params.id);
     const { name, email, bio } = req.body;
-    const results = await authorModels.replaceAuthor(req.params.id, name, email, bio);
+    const results = await authorModels.replaceAuthor(id, name, email, bio);
     if (!results) throw notFound('Author not found');
     res.status(200).json(results);
 });
 
 router.patch("/:id", validateId, validateAuthorPatch, async (req, res) => {
+    const id = Number(req.params.id);
     const { name, email, bio } = req.body;
-    const results = await authorModels.updateAuthor(req.params.id, name, email, bio);
+    const results = await authorModels.updateAuthor(id, name, email, bio);
     if (!results) throw notFound('Author not found');
     res.status(200).json(results);
 });

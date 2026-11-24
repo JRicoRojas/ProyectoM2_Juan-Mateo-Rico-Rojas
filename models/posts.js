@@ -12,12 +12,12 @@ async function getAllPosts(filters = {}) {
     }
     if(filters.published){
         sql += ` AND published = $${paramIndex}`;
-        values.push(`%${filters.published}%`);
+        values.push(filters.published);
         paramIndex++;
     }
     if(filters.author_id){
         sql += ` AND author_id = $${paramIndex}`;
-        values.push(`%${filters.author_id}%`);
+        values.push(filters.author_id);
         paramIndex++;
     }
     sql += ` ORDER BY id ASC`;
@@ -47,7 +47,7 @@ async function replacePost (id, title, content, published, author_id){
 }
 
 async function updatePost (id, title, content, published, author_id){
-    const res = await pool.query('UPDATE posts SET title = COALESCE ($2,title), content = COALESCE ($3,content), published = COALESCE ($4,true), published = COALESCE ($4,author_id) WHERE id = $1 RETURNING *;',[id, title, content, published, author_id]);
+    const res = await pool.query('UPDATE posts SET title = COALESCE ($2,title), content = COALESCE ($3,content), published = COALESCE ($4,published), author_id = COALESCE ($5,author_id) WHERE id = $1 RETURNING *;',[id, title, content, published, author_id]);
     return res.rows[0];
 }
 
