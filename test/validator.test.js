@@ -1,5 +1,5 @@
 import { describe, vi, test, expect } from "vitest";
-import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch } from "../errors/validators";
+import { validateId, validateEmail, validateString, validateBio, validateAuthorBody, validateAuthorPatch, validateBoolean, validatePostsBody, validatePostPatch } from "../errors/validators";
 
 describe('validateId', () => {
     test('ID valido llama next', () => {
@@ -51,6 +51,10 @@ describe('validateName', () => {
 describe('validateBio', ()=>{
     test ('Acepta bio valida', () =>{
         expect(()=>validateBio('Test bio only with string 123123')).not.toThrow();
+    });
+
+    test('Acepta sin bio', () =>{
+        expect(()=> validateBio(undefined)).not.toThrow();
     });
 
     test ('No acepta bio sin texto', () =>{
@@ -145,6 +149,134 @@ describe('validateAuthorPatch', ()=>{
         const next = vi.fn();
         const req = {body :{}};
         expect(() => validateAuthorPatch(req, {}, next)).toThrow('At least one field is required');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
+describe('validateBoolean', () =>{
+    test('Pasa sin boolean', () => {
+        expect(()=> validateBoolean(undefined)).not.toThrow();
+    });
+    test ('Pasa un boolean true',()=>{
+        expect(()=> validateBoolean(true)).not.toThrow();
+    });
+    test ('Pasa un boolean false', () => {
+        expect (()=> validateBoolean(false)).not.toThrow();
+    });
+    test ('No pasa un string', () => {
+        expect (()=>validateBoolean('true', 'Published')).toThrow("Published should be a 'Boolean'");
+    });
+    test ('No pasa un number', () => {
+        expect (()=>validateBoolean(123, 'Published')).toThrow("Published should be a 'Boolean'");
+    });
+});
+
+describe('validatePostsBody', () => {
+    test ('Pasa un post body', () => {
+        const next = vi.fn();
+        const req = {body :{title : 'Test title', content: 'test content', published : true, author_id : 1}};
+        validatePostsBody(req,{},next)
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test ('Pasa un post body sin published', () => {
+        const next = vi.fn();
+        const req = {body :{title : 'Test title', content: 'test content', author_id : 1}};
+        validatePostsBody(req,{},next)
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test ('No pasa un post body sin author_id', () => {
+        const next = vi.fn();
+        const req = {body :{title : 'Test title', content: 'test content', published : true}};
+        expect(()=>validatePostsBody(req,{},next)).toThrow("Author ID is required");
+
+    });
+    test ('No pasa un post body author_id letras', () => {
+        const next = vi.fn();
+        const req = {body :{title : 'Test title', content: 'test content', published : true, author_id : 'true'}};
+        expect(()=>validatePostsBody(req,{},next)).toThrow("Author ID should be a positive integer");
+    });
+    test ('No pasa un post body sin title', () => {
+        const next = vi.fn();
+        const req = {body :{content: 'test content', published : true, author_id : 1}};
+        expect(()=>validatePostsBody(req,{},next)).toThrow("Title is required");
+    });
+    test ('No pasa un post body sin content', () => {
+        const next = vi.fn();
+        const req = {body :{title : 'Test title', published : true, author_id : 1}};
+        expect(()=>validatePostsBody(req,{},next)).toThrow("Content is required");
+    });
+});
+describe('validatePostPatch', ()=>{
+    test('patch con todos los valores para cambiar pasa',()=>{
+        const next = vi.fn();
+        const req = {body :{title: 'test', content: 'content test', content: 'test content', published : true, author_id : 1}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+        test('patch con todos los solo title',()=>{
+        const next = vi.fn();
+        const req = {body :{title: 'test'}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con todos los solo content',()=>{
+        const next = vi.fn();
+        const req = {body :{content: 'content test'}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con todos los solo published',()=>{
+        const next = vi.fn();
+        const req = {body :{published : true}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con todos los solo author_ID',()=>{
+        const next = vi.fn();
+        const req = {body :{author_id : 1}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con title y content',()=>{
+        const next = vi.fn();
+        const req = {body :{title: 'test', content: 'content test'}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con title y published',()=>{
+        const next = vi.fn();
+        const req = {body :{title: 'test', published : true}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con title y author_id',()=>{
+        const next = vi.fn();
+        const req = {body :{title: 'test', author_id : 1}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con content y published',()=>{
+        const next = vi.fn();
+        const req = {body :{content: 'test', published : true}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con content y author_id',()=>{
+        const next = vi.fn();
+        const req = {body :{content: 'test', author_id : 1}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('patch con published y author_id',()=>{
+        const next = vi.fn();
+        const req = {body :{published: true, author_id : 1}};
+        validatePostPatch(req, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test('No deja sin body',()=>{
+        const next = vi.fn();
+        const req = {body :{}};
+        expect(() => validatePostPatch(req, {}, next)).toThrow('At least one field is required');
         expect(next).not.toHaveBeenCalled();
     });
 });

@@ -2,11 +2,13 @@ const express = require('express');
 const app = express();
 
 const routerAuthors = require("./routes/author.routes");
+const routerPosts = require("./routes/posts.routes");
 const {errorHandler} = require("./errors/errorHandler");
 const {notFound} = require("./errors/errors");
 
 app.use(express.json());
 app.use('/authors', routerAuthors);
+app.use('/posts', routerPosts);
 
 app.use((req, res, next) => {
   next(notFound(`Route not found ${req.originalUrl}`));

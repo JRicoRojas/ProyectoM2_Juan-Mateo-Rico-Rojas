@@ -45,8 +45,21 @@ function validateBio(bio) {
 }
 
 function validateBoolean(boolean, name){
-    if(boolean){
+    
+    if (boolean === undefined) return;
 
+    if(typeof boolean !== 'boolean'){
+        throw badRequest(`${name} should be a 'Boolean'`);
+    }
+}
+
+function validateAuthorId(id){
+    if (!id) {
+        throw badRequest('Author ID is required');
+    }
+
+    if (!Number.isInteger(id) || id <= 0) {
+        throw badRequest('Author ID should be a positive integer');
     }
 }
 
@@ -73,6 +86,21 @@ function validatePostsBody (req, res, next){
     const {title, content, published, author_id} = req.body ?? {};
     validateString(title, 'Title');
     validateString(content, 'Content');
+    validateBoolean(published, 'Published');
+    validateAuthorId(author_id);
+    next();
+}
+
+function validatePostPatch(req, res, next) {
+    const { title, content, published, author_id } = req.body ?? {};
+    if (title === undefined && content === undefined && published === undefined &&  author_id === undefined) {
+        throw badRequest('At least one field is required');
+    }
+    if (title !== undefined) validateString(title, 'Title');
+    if (content !== undefined) validateString(content, 'Content');
+    validateBoolean(published, 'Published');
+    if (author_id !== undefined ) validateAuthorId(author_id);
+    next();
 }
 
 module.exports = {
@@ -82,4 +110,7 @@ module.exports = {
     validateBio,
     validateAuthorBody,
     validateAuthorPatch,
+    validateBoolean,
+    validatePostsBody,
+    validatePostPatch
 };

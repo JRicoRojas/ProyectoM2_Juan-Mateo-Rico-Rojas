@@ -73,12 +73,22 @@ describe('errorHandler', () => {
 
     test('constraint conocida (authors_email_key) responde 409', () => {
         const res = mockRes();
-        const err = new Error('duplicate key value violates unique constraint');
+        const err = new Error('llave duplicada viola restricción de unicidad «authors_email_key»');
         err.code = '23505';
         err.constraint = 'authors_email_key';
         errorHandler(err, {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(409);
         expect(res.json).toHaveBeenCalledWith({ error: 'Author email already exists' });
+    });
+
+    test('constraint conocida (posts_author_id_fkey) responde 400', () => {
+        const res = mockRes();
+        const err = new Error('inserción o actualización en la tabla «posts» viola la llave foránea «posts_author_id_fkey»');
+        err.code = '23503';
+        err.constraint = 'posts_author_id_fkey';
+        errorHandler(err, {}, res, vi.fn());
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Author does not exist' });
     });
 
     test('constraint desconocida cae al flujo normal (500)', () => {
