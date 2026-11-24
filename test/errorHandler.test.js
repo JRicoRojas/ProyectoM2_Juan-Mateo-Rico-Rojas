@@ -32,11 +32,45 @@ describe('errorHandler', () => {
         expect(res.json).toHaveBeenCalledWith({ error: 'no existe' });
     });
 
-    test('error sin code responde 500 con su mensaje', () => {
+    test('error sin code responde 500 con un mensaje generico', () => {
         const res = mockRes();
         errorHandler(new Error('algo fallo'), {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ error: 'algo fallo' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
+    });
+
+    test('el 500 no revela el mensaje interno del error', () => {
+        const res = mockRes();
+        const err = new Error('value "99999999999" is out of range for type integer');
+        err.code = '22003';
+        errorHandler(err, {}, res, vi.fn());
+        expect(res.status).toHaveBeenCalledWith(500);
+        const body = res.json.mock.calls[0][0];
+        expect(body.error).toBe('Internal server error');
+        expect(JSON.stringify(body)).not.toContain('out of range');
+    });
+
+    test('el 500 se registra en el log del servidor', () => {
+        const res = mockRes();
+        const err = new Error('algo fallo');
+        errorHandler(err, {}, res, vi.fn());
+        expect(console.error).toHaveBeenCalledOnce();
+        expect(console.error.mock.calls[0][0]).toContain('algo fallo');
+    });
+
+    test('un err.status 5xx tambien oculta el mensaje', () => {
+        const res = mockRes();
+        const err = new Error('detalle interno');
+        err.status = 503;
+        errorHandler(err, {}, res, vi.fn());
+        expect(res.status).toHaveBeenCalledWith(503);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
+    });
+
+    test('los errores 4xx no se registran como errores del servidor', () => {
+        const res = mockRes();
+        errorHandler(badRequest('dato invalido'), {}, res, vi.fn());
+        expect(console.error).not.toHaveBeenCalled();
     });
 
     test('code no entero (string de pg) responde 500', () => {
@@ -48,6 +82,7 @@ describe('errorHandler', () => {
     });
 
     test('usa err.status cuando no hay code entero (ej. JSON roto de express.json)', () => {
+        // el mensaje de un 4xx si se muestra al cliente
         const res = mockRes();
         const err = new Error('Unexpected end of JSON input');
         err.status = 400;
@@ -98,6 +133,6 @@ describe('errorHandler', () => {
         err.constraint = 'otra_constraint';
         errorHandler(err, {}, res, vi.fn());
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ error: 'otra restriccion' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
     });
 });

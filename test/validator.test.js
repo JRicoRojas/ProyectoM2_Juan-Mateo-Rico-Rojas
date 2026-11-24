@@ -570,6 +570,52 @@ describe('validateString con valores falsy', () => {
     });
 });
 
+describe('ids fuera del rango de INTEGER de PostgreSQL (maximo 2147483647)', () => {
+    test('validateId acepta el maximo', () => {
+        const next = vi.fn();
+        validateId({ params: { id: '2147483647' } }, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+    });
+    test.each(['2147483648', '99999999999'])('validateId rechaza %s', (id) => {
+        const next = vi.fn();
+        expect(() => validateId({ params: { id } }, {}, next)).toThrow('ID is too large (max 2147483647)');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('validateAuthorId y validatePostId aceptan el maximo', () => {
+        expect(() => validateAuthorId(2147483647)).not.toThrow();
+        expect(() => validatePostId(2147483647)).not.toThrow();
+    });
+    test('validateAuthorId y validatePostId rechazan un valor mayor', () => {
+        expect(() => validateAuthorId(2147483648)).toThrow('Author ID is too large (max 2147483647)');
+        expect(() => validatePostId(2147483648)).toThrow('Post ID is too large (max 2147483647)');
+    });
+    test('validatePostsQuery acepta el maximo y rechaza un valor mayor', () => {
+        const next = vi.fn();
+        validatePostsQuery({query: {author_id: '2147483647'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+        expect(() => validatePostsQuery({query: {author_id: '2147483648'}}, {}, vi.fn())).toThrow('Author ID is too large');
+    });
+    test('validateCommentsQuery acepta el maximo y rechaza un valor mayor', () => {
+        const next = vi.fn();
+        validateCommentsQuery({query: {post_id: '2147483647', author_id: '2147483647'}}, {}, next);
+        expect(next).toHaveBeenCalledOnce();
+        expect(() => validateCommentsQuery({query: {author_id: '2147483648'}}, {}, vi.fn())).toThrow('Author ID is too large');
+        expect(() => validateCommentsQuery({query: {post_id: '2147483648'}}, {}, vi.fn())).toThrow('Post ID is too large');
+    });
+    test('validatePostsBody rechaza un author_id mayor', () => {
+        const next = vi.fn();
+        const req = {body: {title: 'Titulo', content: 'Contenido', author_id: 2147483648}};
+        expect(() => validatePostsBody(req, {}, next)).toThrow('Author ID is too large');
+        expect(next).not.toHaveBeenCalled();
+    });
+    test('validateCommentsBody rechaza un post_id mayor', () => {
+        const next = vi.fn();
+        const req = {body: {content: 'Comentario', author_id: 1, post_id: 99999999999}};
+        expect(() => validateCommentsBody(req, {}, next)).toThrow('Post ID is too large');
+        expect(next).not.toHaveBeenCalled();
+    });
+});
+
 describe('validateAuthorId y validatePostId', () => {
     test('acepta un entero positivo', () => {
         expect(() => validateAuthorId(1)).not.toThrow();

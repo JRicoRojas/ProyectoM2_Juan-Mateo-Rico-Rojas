@@ -543,6 +543,27 @@ describe('JSON malformado', () => {
     });
 });
 
+describe('Ids fuera del rango de INTEGER (no deben producir un 500)', () => {
+    test('el id maximo valido que no existe responde 404', async () => {
+        const res = await request(app).get('/authors/2147483647');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toBe('Author not found');
+    });
+
+    test.each([
+        ['get', '/authors/2147483648'],
+        ['get', '/authors/99999999999'],
+        ['get', '/authors/99999999999/posts'],
+        ['put', '/authors/99999999999'],
+        ['patch', '/authors/99999999999'],
+        ['delete', '/authors/99999999999'],
+    ])('%s %s responde 400', async (metodo, ruta) => {
+        const res = await request(app)[metodo](ruta).send({name: 'Test', email: 'test@example.com'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('ID is too large (max 2147483647)');
+    });
+});
+
 afterAll(async () => {
     await runSeed();
     await pool.end();

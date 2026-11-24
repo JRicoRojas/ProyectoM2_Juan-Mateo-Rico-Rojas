@@ -1,9 +1,15 @@
 const { badRequest } = require("./errors");
 
+// Los ids son SERIAL (INTEGER de PostgreSQL): un valor mayor produce un error de la base de datos
+const MAX_ID = 2147483647;
+
 function validateId(req, res, next) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
         throw badRequest('ID should be a positive integer');
+    }
+    if (id > MAX_ID) {
+        throw badRequest(`ID is too large (max ${MAX_ID})`);
     }
     next();
 }
@@ -61,6 +67,10 @@ function validatePositiveInt(value, label){
     if (!Number.isInteger(value) || value <= 0) {
         throw badRequest(`${label} should be a positive integer`);
     }
+
+    if (value > MAX_ID) {
+        throw badRequest(`${label} is too large (max ${MAX_ID})`);
+    }
 }
 
 function validateAuthorId(id){
@@ -77,6 +87,10 @@ function validateQueryId(value, label){
     const number = Number(value);
     if (typeof value !== 'string' || value.trim() === '' || !Number.isInteger(number) || number <= 0) {
         throw badRequest(`${label} should be a positive integer`);
+    }
+
+    if (number > MAX_ID) {
+        throw badRequest(`${label} is too large (max ${MAX_ID})`);
     }
 }
 

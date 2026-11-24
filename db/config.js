@@ -14,4 +14,10 @@ const pool = new Pool({
     connectionTimeoutMillis: 10000,
 });
 
+// Sin este listener, un error en una conexion inactiva del pool (por ejemplo si la base se reinicia)
+// se convierte en una excepcion no capturada y tumba el proceso.
+pool.on('error', (err) => {
+    console.error('Error inesperado en una conexion inactiva del pool:', err.message);
+});
+
 module.exports = pool;

@@ -454,6 +454,52 @@ describe('DELETE /comments', () => {
     });
 });
 
+describe('Ids fuera del rango de INTEGER (no deben producir un 500)', () => {
+    test('el id maximo valido que no existe responde 404', async () => {
+        const res = await request(app).get('/comments/2147483647');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.error).toBe('Comment not found');
+    });
+
+    test.each([
+        ['/comments/2147483648'],
+        ['/comments/99999999999/author'],
+        ['/comments/99999999999/post'],
+    ])('get %s responde 400', async (ruta) => {
+        const res = await request(app).get(ruta);
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('ID is too large (max 2147483647)');
+    });
+
+    test('query post_id fuera de rango', async () => {
+        const res = await request(app).get('/comments').query({post_id: '99999999999'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Post ID is too large (max 2147483647)');
+    });
+
+    test('query author_id fuera de rango', async () => {
+        const res = await request(app).get('/comments').query({author_id: '99999999999'});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Author ID is too large (max 2147483647)');
+    });
+
+    test('POST con post_id fuera de rango', async () => {
+        const res = await request(app).post('/comments').send({content: 'Comentario', author_id: 1, post_id: 99999999999});
+        expect(res.statusCode).toBe(400);
+        expect(res.body.error).toBe('Post ID is too large (max 2147483647)');
+    });
+
+    test('PUT, PATCH y DELETE con id fuera de rango', async () => {
+        const put = await request(app).put('/comments/99999999999').send({content: 'Comentario', author_id: 1, post_id: 1});
+        const patch = await request(app).patch('/comments/99999999999').send({content: 'Comentario'});
+        const del = await request(app).delete('/comments/99999999999');
+        for (const res of [put, patch, del]) {
+            expect(res.statusCode).toBe(400);
+            expect(res.body.error).toBe('ID is too large (max 2147483647)');
+        }
+    });
+});
+
 afterAll(async () => {
     await runSeed();
     await pool.end();
