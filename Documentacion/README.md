@@ -218,19 +218,11 @@ Tambien puedes abrir el archivo en [editor.swagger.io](https://editor.swagger.io
 
 La API se conecta a la base de datos por la **URL interna** (`postgres.railway.internal`), a traves de la variable `DATABASE_URL` que referencia al servicio PostgreSQL. La base tambien tiene un dominio publico (proxy TCP) que se usa solo para ejecutar `npm run db:init` desde un computador.
 
-### Capturas del despliegue
+### Captura del despliegue
 
-**1. Despliegue activo y exitoso** (pestana **Deployments** del servicio de la API, Node 22, 1 replica):
+Despliegue activo y exitoso (pestana **Deployments** del servicio de la API, Node 22, 1 replica):
 
 ![Despliegue activo de la API en Railway](./capturas/railway-deployment.png)
-
-**2. Red del servicio de la API** (**Settings** > **Networking**): dominio publico, puerto `8080` y URL interna `proyectom2juan-mateo-rico-rojas.railway.internal`:
-
-![Red publica y privada del servicio de la API en Railway](./capturas/railway-api-networking.png)
-
-**3. Red del servicio PostgreSQL** (**Settings** > **Networking**): red publica (proxy TCP) y URL interna `postgres.railway.internal`:
-
-![Redes publica y privada del servicio PostgreSQL en Railway](./capturas/railway-postgres-networking.png)
 
 Cada `push` a la rama principal despliega automaticamente la nueva version.
 
