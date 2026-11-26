@@ -9,8 +9,6 @@ function errorHandler(err, req, res, next) {
         ? err.code
         : (Number.isInteger(err.status) && err.status >= 400 && err.status < 600 ? err.status : 500);
 
-    // Los errores del servidor (5xx) se registran en el log pero nunca se muestran al cliente,
-    // porque su mensaje puede revelar detalles internos (por ejemplo, textos de PostgreSQL).
     if (status >= 500) {
         console.error(err.stack ?? err);
         return res.status(status).json({ error: "Internal server error" });

@@ -7,7 +7,6 @@ describe('pool de conexiones', () => {
     });
 
     test('tiene un listener para errores de conexiones inactivas', () => {
-        // Sin listener, un error en una conexion inactiva tumba el proceso de Node
         expect(pool.listenerCount('error')).toBeGreaterThan(0);
     });
 });
